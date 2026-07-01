@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# uv virtual env
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Results
+results/
+
+# pytest
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
