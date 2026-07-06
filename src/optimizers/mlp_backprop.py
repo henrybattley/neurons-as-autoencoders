@@ -22,7 +22,7 @@ def train(model, data_loader, criterion, optimizer, device):
     avg_loss = epoch_loss / len(data_loader)
     return avg_loss
 
-
+""" may come in useful later for test set? 
 def eval(model, data_loader, criterion, device):
     model.to(device)
     model.eval()
@@ -49,3 +49,4 @@ def eval(model, data_loader, criterion, device):
     return avg_loss
 
     #return avg_loss, accuracy
+    """

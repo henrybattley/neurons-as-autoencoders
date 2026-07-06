@@ -90,7 +90,7 @@ class NKLandscape:
 
         return X, y
     
-
+    #send generated genomes and fitness to tensors for use with pytorch
     def get_dataset(N,K,n_samples,seed):
 
         print("Loading NK dataset...")
@@ -104,6 +104,9 @@ class NKLandscape:
         X, y = landscape.sample(n_samples)
 
         X = torch.tensor(X,dtype=torch.float32)
+
+        #ensure that all 0 binary values are represented as -1s for networks (networks perform best when inputs are centered around zero with a balanced variance)
+        X = 2 * X - 1
 
         y = torch.tensor(y,dtype=torch.float32).unsqueeze(1)
 
