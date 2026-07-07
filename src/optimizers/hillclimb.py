@@ -1,26 +1,50 @@
 import numpy as np
 import torch
 
+#dedicated hill climber for the multi-model networks
 
-def mlp_hill_climb(model, data_loader, criterion, device,rng):
+def hill_climb(model, data_loader, device,rng,mlp_training=False):
     model.to(device)
     model.train()
 
-    epoch_loss = 0.0
-    for inputs, labels, target_inputs in data_loader:
-        inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
+    #mlp training only uses MSE
+    if mlp_training==True:
+        criterion = torch.nn.MSELoss()
+        criterion.to(device)
     
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
+        epoch_loss = 0.0
+        for inputs, labels, target_inputs in data_loader:
+            inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
+        
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
 
-        epoch_loss += loss.item()
+            epoch_loss += loss.item()
 
-    avg_loss = epoch_loss / len(data_loader)
+        avg_loss = epoch_loss / len(data_loader)
 
     delta = rng.uniform(-1,1)
     
     #50/50 chance of purturbing hidden vs output layer params
     if rng.random() <= 0.5: #perturb hidden layer
+
+        if mlp_training==False:
+            criterion = torch.nn.MSELoss() # reconstruction error
+            criterion.to(device)
+        
+            epoch_loss = 0.0
+            for inputs, labels, target_inputs in data_loader:
+                inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
+
+                
+                X_hat, y = model(inputs)
+
+                #target inputs are in range [0,1] binary values since sigmoid can't output -1s
+                loss = criterion(X_hat, target_inputs)
+
+                epoch_loss += loss.item()
+
+            avg_loss = epoch_loss / len(data_loader)
 
         row = rng.integers(model.hidden_dim)
         col = rng.integers(model.input_dim)
@@ -36,6 +60,21 @@ def mlp_hill_climb(model, data_loader, criterion, device,rng):
 
 
     else:   #set indexes to perturb output layer
+
+        if mlp_training==True: 
+            criterion = torch.nn.MSELoss()
+            criterion.to(device)
+        
+            epoch_loss = 0.0
+            for inputs, labels, target_inputs in data_loader:
+                inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
+            
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+
+                epoch_loss += loss.item()
+
+            avg_loss = epoch_loss / len(data_loader)
 
         row = rng.integers(1)
         col = rng.integers(model.hidden_dim)

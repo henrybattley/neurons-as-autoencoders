@@ -10,7 +10,7 @@ class NKLandscape:
 
     """
 
-    def __init__(self, N: int, K: int, seed=None):
+    def __init__(self, N: int, K: int, seed=42):
         self.N = N
         self.K = K
 
@@ -106,11 +106,11 @@ class NKLandscape:
         X = torch.tensor(X,dtype=torch.float32)
 
         #ensure that all 0 binary values are represented as -1s for networks (networks perform best when inputs are centered around zero with a balanced variance)
-        X = 2 * X - 1
+        X_scale = 2 * X - 1
 
         y = torch.tensor(y,dtype=torch.float32).unsqueeze(1)
 
-        NK_train = torch.utils.data.TensorDataset(X,y)
+        NK_train = torch.utils.data.TensorDataset(X_scale,y,X)
 
 
         return NK_train
