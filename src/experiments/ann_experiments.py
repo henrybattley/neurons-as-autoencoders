@@ -4,15 +4,15 @@ import torch, torchvision
 import random
 
 
-from src.models.mlp import MLP
+from src.models.ANN import ANN
 from src.datasets.NK import NKLandscape
 from src.optimizers import mlp_backprop
-from src.optimizers import MLP_hillclimb
+from src.optimizers import hillclimb
 
 
 #training pipeline with default parameters
 def train_ANN(  NK_data_train, 
-                NK_data_test,
+                #NK_data_test,
                 n_epochs=100, 
                 batch_size=64,
                 learning_rate=0.001,
@@ -23,7 +23,8 @@ def train_ANN(  NK_data_train,
                 seed=42):
     
     training_history = {
-    "train_loss": [],
+    "encoder_train_loss": [],
+    "task_train_loss": [],
     "test_loss": [],
     }
     
@@ -48,41 +49,46 @@ def train_ANN(  NK_data_train,
     
 
     #sample and retrieve shape for parameterizing model input dims
-    sample_x, _ = NK_data_train[0]
+    sample_x, _,_= NK_data_train[0]
     input_dim = sample_x.shape[0]
 
     print(f"input dims are {input_dim}")
 
 
-    model = MLP(input_dim=input_dim,hidden_dim=10) # 10 nodes in the hidden layer (H of 10) as per Bull's experiments
+    model = ANN(input_dim=input_dim,hidden_dim=10) # 10 nodes in the hidden layer (H of 10) as per Bull's experiments
 
     model.to(device)
 
-#need to specify when criterion changes:
-    #criterion = torch.nn.MSELoss()
-    #criterion.to(device)
-
-
-    #optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     # Training loop
     for epoch in range(n_epochs):
             
         if hill_climb == False:
    
-            #criterion = torch.nn.MSELoss() criterion is equal to our funky multiobjective term here I think
-            #criterion.to(device)
+            criterion = torch.nn.MSELoss() #criterion is actually equal to our funky multiobjective term here I think
+            criterion.to(device)
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
             train_loss = mlp_backprop.train(model, train_loader, criterion, optimizer, device)
 
+            print(f"Epoch [{epoch + 1}/{n_epochs}], Training Loss: {train_loss:.4f}")
+            training_history["train_loss"].append(train_loss)
+
+
         else:
+            criterion = torch.nn.MSELoss() 
+            criterion.to(device)
+            train_loss,layer_perturb = hillclimb.hill_climb(model, train_loader,criterion, device,rng)
 
-            train_loss = MLP_hillclimb.mlp_hill_climb(model, train_loader, criterion, device,rng)
+            if layer_perturb<=0.5:
+                print(f"Epoch [{epoch + 1}/{n_epochs}], Autoencoder Training Loss: {train_loss:.4f}")
+                training_history["encoder_train_loss"].append(train_loss)
 
 
-        print(f"Epoch [{epoch + 1}/{n_epochs}], Training Loss: {train_loss:.4f}")
-            
+            else:
+                print(f"Epoch [{epoch + 1}/{n_epochs}], Task Training Loss: {train_loss:.4f}")
+                training_history["task_train_loss"].append(train_loss)
         
-        training_history["train_loss"].append(train_loss)
+
 
         # compute the test loss every epoch
         #if epoch % 1000 == 0 or epoch==9999:

@@ -1,0 +1,25 @@
+experiment:
+  name: mlp_backprop_baseline
+
+dataset:
+  N: 20
+  K: 10
+  n_samples: 5000
+  seed: 42
+
+model:
+  hidden_dim: 2
+  activation: sigmoid
+  weight_init: bull_uniform
+
+training:
+  optimizer: adam
+  learning_rate: 0.001
+  epochs: 100
+  batch_size: 64
+  loss: mse
+  patience: 3
+
+evaluation:
+  validation_split: 0.2
+  final_train: true

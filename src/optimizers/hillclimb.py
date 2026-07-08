@@ -3,99 +3,157 @@ import torch
 
 #dedicated hill climber for the multi-model networks
 
-def hill_climb(model, data_loader, device,rng,mlp_training=False):
+def hill_climb(model, data_loader,criterion, device,rng):
     model.to(device)
     model.train()
 
-    #mlp training only uses MSE
-    if mlp_training==True:
-        criterion = torch.nn.MSELoss()
-        criterion.to(device)
+
+    delta = rng.uniform(-1,1)
     
+    #50/50 chance of purturbing hidden vs output layer params
+    layer_perturb = rng.random()
+    if layer_perturb <= 0.5: #perturb hidden layer
+
+        
+        """ this might need to be computed after we select a parameter that belongs to a certain neuron and then we'll compute the loss of what that neuron produces-- we'll compute both and see which aligns with the paper data"""
         epoch_loss = 0.0
         for inputs, labels, target_inputs in data_loader:
             inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
-        
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
+
+            #x_hat should be the output for one neuron?  -- this model output can be outside of these ifs anyway 
+            x_hat, y = model(inputs)
+
+            #target inputs are in range [0,1] binary values since sigmoid can't output -1s
+            loss = criterion(x_hat, target_inputs)
 
             epoch_loss += loss.item()
 
         avg_loss = epoch_loss / len(data_loader)
 
-    delta = rng.uniform(-1,1)
-    
-    #50/50 chance of purturbing hidden vs output layer params
-    if rng.random() <= 0.5: #perturb hidden layer
 
-        if mlp_training==False:
-            criterion = torch.nn.MSELoss() # reconstruction error
-            criterion.to(device)
-        
-            epoch_loss = 0.0
-            for inputs, labels, target_inputs in data_loader:
-                inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
+        #taking loss of single neuron output for the layer-based encoder? --quite possibly
 
-                
-                X_hat, y = model(inputs)
 
-                #target inputs are in range [0,1] binary values since sigmoid can't output -1s
-                loss = criterion(X_hat, target_inputs)
+        #params in hidden layer
+        n_hidden_w = model.hidden.weight.numel()
+        n_hidden_b = model.hidden.bias.numel()
 
-                epoch_loss += loss.item()
+        #params in decoder layer
+        n_decoder_w = model.decoder.weight.numel()
+        n_decoder_b = model.decoder.bias.numel()
 
-            avg_loss = epoch_loss / len(data_loader)
+        total = (
+            n_hidden_w
+            + n_hidden_b
+            + n_decoder_w
+            + n_decoder_b
+        )
 
-        row = rng.integers(model.hidden_dim)
-        col = rng.integers(model.input_dim)
-        tot_b= model.hidden.bias.numel()  #may use n of rows for the mlp but not for the nan i don't think- actually biases are just a vector per layer surely so we can reference them that way with one index?
-        tot_w= model.hidden.weight.numel()
-        tot_layer_params = tot_b + tot_w
+        #random parameter associated with the 'hidden layer' (that is the encoding and decoding neuron connections)
+        idx = rng.integers(total)
 
-        W_update_p = tot_w/tot_layer_params
-        b_update_p = tot_b/tot_layer_params
+        if idx < n_hidden_w:
+            #index the hidden weights to subsequently be pertubed with probability n_hidden_w/total
 
-        layer = 'hidden'
-        layer_module = getattr(model, layer)
+            layer_module = model.hidden
+            parameter_type = "weight"
+
+            row = idx // model.input_dim #floor divide by the input dims to get the row of the random weight
+            col = idx % model.input_dim # modulo by the input dims to get the column
+            
+
+        elif idx < n_hidden_w + n_hidden_b:
+            #index hidden bias
+
+            layer_module = model.hidden
+            parameter_type = "bias"
+
+            #make row relative to the layer indexing not the whole parameter space indexing
+            row = idx - n_hidden_w
+
+
+        elif idx < n_hidden_w + n_hidden_b + n_decoder_w:
+            #index decoder w
+
+            layer_module = model.decoder
+            parameter_type = "weight"
+ 
+            #again make indexing relative to layer 
+            idx -= (n_hidden_w + n_hidden_b)
+
+            #this is more readable : decoder_idx = idx - (n_hidden_w + n_hidden_b)
+
+            row = idx // model.hidden_dim
+            col = idx % model.hidden_dim
+
+        else: 
+            #index decoder b
+
+            layer_module = model.decoder
+            parameter_type = "bias"
+
+            row = idx - (n_hidden_w + n_hidden_b + n_decoder_w)
+
 
 
     else:   #set indexes to perturb output layer
 
-        if mlp_training==True: 
-            criterion = torch.nn.MSELoss()
-            criterion.to(device)
-        
-            epoch_loss = 0.0
-            for inputs, labels, target_inputs in data_loader:
-                inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
+        #change the loss function to be task loss        
+        epoch_loss = 0.0
+        for inputs, labels, target_inputs in data_loader:
+            inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
             
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
+            #outputs = model(inputs)
+            #loss = criterion(outputs, labels)
+     
+            x_hat, y = model(inputs)
+            loss = criterion(y, labels)
 
-                epoch_loss += loss.item()
+            epoch_loss += loss.item()
 
-            avg_loss = epoch_loss / len(data_loader)
+        avg_loss = epoch_loss / len(data_loader)
 
-        row = rng.integers(1)
-        col = rng.integers(model.hidden_dim)
+        
+        #params in output layer
+        n_ouput_w = model.output.weight.numel()
+        n_output_b = model.output.bias.numel()
 
-        tot_b= model.output.bias.numel() 
-        tot_w= model.output.weight.numel()
-        tot_layer_params = tot_b + tot_w
+        total = (
+            n_ouput_w
+            + n_output_b
+        )
 
-        layer = 'output'
-        layer_module = getattr(model, layer)
+        #random parameter from the output layer
+        idx = rng.integers(total)
 
-    param_type = rng.random()
+        if idx < n_ouput_w:
+            #do the W perturbations..
+            #define the row and col
+            layer_module = model.output
+            parameter_type = "weight"
 
-    if param_type <= tot_w/tot_layer_params:
-        #do the W perturbations..
+            row = 0
+            col = idx % model.hidden_dim
+
+
+        else:
+            #do the b perturbations
+            #define the row
+
+            layer_module = model.output
+            parameter_type = "bias"
+
+            row = 0
+
+
+
+    # do the actual perturbations here based on predefined layer parameter positions
+    if parameter_type == "weight":
+
         old = layer_module.weight[row, col].item()
         with torch.no_grad():
             layer_module.weight[row, col] += delta
-
     else:
-        #do the b updates
 
         old = layer_module.bias[row].item()
         with torch.no_grad():
@@ -105,18 +163,25 @@ def hill_climb(model, data_loader, device,rng,mlp_training=False):
     #now get the loss again and compare previous
 
     new_epoch_loss = 0.0
-    for inputs, labels in data_loader:
-        inputs, labels = inputs.to(device), labels.to(device)
+    for inputs, labels, target_inputs  in data_loader:
+        inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
     
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
+        x_hat,y = model(inputs)
+
+        if layer_perturb <= 0.5:
+
+            loss = criterion(x_hat, target_inputs)
+
+        else:
+
+            loss = criterion(y, labels)
 
         new_epoch_loss += loss.item()
 
     new_avg_loss = new_epoch_loss / len(data_loader)
 
     if new_avg_loss > avg_loss:
-        if param_type <= tot_w/tot_layer_params:
+        if parameter_type == 'weight':
             with torch.no_grad():
                 layer_module.weight[row, col] = old
         else:
@@ -124,12 +189,12 @@ def hill_climb(model, data_loader, device,rng,mlp_training=False):
                 layer_module.bias[row] = old
 
         
-        return avg_loss
+        return avg_loss,layer_perturb
     
     # when perturbed parameter results in the same loss (within the fractional threshold) then chose either new or old parameter at random
     elif abs(new_avg_loss - avg_loss) < 1e-12:
         tie_break = rng.random()
-        if param_type <= tot_w/tot_layer_params: #if we previously perturbed a weight
+        if parameter_type == 'weight': #if we previously perturbed a weight
             if tie_break >= 0.5:
                 with torch.no_grad():
                     layer_module.weight[row, col] = old
@@ -140,7 +205,7 @@ def hill_climb(model, data_loader, device,rng,mlp_training=False):
                     layer_module.bias[row] = old
 
     
-    return new_avg_loss
+    return new_avg_loss,layer_perturb
 
 
 """
@@ -151,5 +216,21 @@ parameter = rng.integers(tot_layer_params)
 
 if parameter < tot_w:
 """
+
+
+""" 
+        row = rng.integers(model.hidden_dim)
+        col = rng.integers(model.input_dim)
+        
+        
+        tot_b= model.hidden.bias.numel()  #may use n of rows for the mlp but not for the nan i don't think- actually biases are just a vector per layer surely so we can reference them that way with one index?
+        tot_w= model.hidden.weight.numel()
+        tot_layer_params = tot_b + tot_w
+
+        W_update_p = tot_w/tot_layer_params
+        b_update_p = tot_b/tot_layer_params
+
+        layer = 'hidden'
+        layer_module = getattr(model, layer)"""
 
 

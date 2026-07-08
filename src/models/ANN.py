@@ -30,14 +30,14 @@ class ANN(nn.Module):
         
     def forward(self, x):
 
-        #latent dim
+        #latent code
         x = self.activation(self.hidden(x))
 
         #reconstructed input
-        X = self.activation(self.decoder(x))
+        x_hat = self.activation(self.decoder(x))
 
         #regressor head
         y = self.activation(self.output(x))
 
 
-        return X,y
+        return x_hat,y
