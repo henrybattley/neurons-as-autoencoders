@@ -79,57 +79,56 @@ def train_NAN(  NK_data_train,
             criterion.to(device)
             train_loss,layer_perturb = nan_hill_climb.nan_hill_climb(model, train_loader,criterion, device,rng)
 
-            # to get errors in parralel we need to compute both errors no matter what and then return them both
-            if layer_perturb<=0.5:
-                print(f"Epoch [{epoch + 1}/{n_epochs}], Autoencoder Training Loss: {train_loss:.4f}")
-                #training_history["encoder_train_loss"].append(train_loss)
-                encoder_loss = 0.0
+            encoder_loss = 0.0
 
-                for neuron in range(model.hidden_dim):
+            # do the reconstruction with every neuron one after the other
+            for neuron in range(model.hidden_dim):
 
-                    neuron_loss = 0.0
+                neuron_loss = 0.0
 
-                    for inputs, _, target_inputs in train_loader:
+                for inputs, _, target_inputs in train_loader:
 
-                        inputs = inputs.to(device)
-                        target_inputs = target_inputs.to(device)
+                    inputs = inputs.to(device)
+                    target_inputs = target_inputs.to(device)
 
-                        x_hat = model.reconstruct_single(inputs, neuron)
+                    x_hat = model.reconstruct_single(inputs, neuron)
 
-                        neuron_loss += criterion(x_hat, target_inputs).item()
+                    #accumulate the loss
+                    #neuron_loss += criterion(x_hat, target_inputs).item()
+                    neuron_loss += criterion(x_hat*2-1, inputs).item()
+                    
 
-                    neuron_loss /= len(train_loader)
+                #len of train loader is one here (but we may want batches with other data)
+                neuron_loss /= len(train_loader) 
 
-                    encoder_loss += neuron_loss
+                encoder_loss += neuron_loss
 
-                encoder_loss /= model.hidden_dim
-                print(f"Epoch [{epoch + 1}/{n_epochs}], new Task Training Loss: {encoder_loss:.4f}")
-                training_history["encoder_train_loss"].append(encoder_loss)
-                                
+            #divide by how many neurons in the hidden layer (so we average over the hidden neurons)
+            encoder_loss /= model.hidden_dim
 
-
-            else:
-                print(f"Epoch [{epoch + 1}/{n_epochs}], Task Training Loss: {train_loss:.4f}")
-                training_history["task_train_loss"].append(train_loss)
-        
+            print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Training Loss: {encoder_loss:.4f}")
+            training_history["encoder_train_loss"].append(encoder_loss)
 
 
-        # compute the test loss every epoch
-        #if epoch % 1000 == 0 or epoch==9999:
-        """ 
-        test_epoch_loss = 0.0
-        for inputs, labels in test_loader:
-            inputs, labels = inputs.to(device), labels.to(device)
+            epoch_loss = 0.0
+            for inputs, labels, target_inputs in train_loader:
+                inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
+                    
+                #outputs = model(inputs)
+                #loss = criterion(outputs, labels)
             
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
+                y = model(inputs)
+                loss = criterion(y, labels)
 
-            test_epoch_loss += loss.item()
+                epoch_loss += loss.item()
 
-        avg_loss = test_epoch_loss / len(test_loader)
-        training_history['test_loss'].append(avg_loss)
-        print(f"Epoch [{epoch + 1}/{n_epochs}], Test Loss: {avg_loss:.4f}")
-        """
+            avg_regression_loss = epoch_loss / len(train_loader)
+
+            print(f"Epoch [{epoch + 1}/{n_epochs}], Regression Training Loss: {avg_regression_loss:.4f}")
+            training_history["task_train_loss"].append(avg_regression_loss)
+
+
+    
 
 
     # Save metrics for the fold if requested
@@ -141,5 +140,4 @@ def train_NAN(  NK_data_train,
 
 
     return model, training_history
-
    

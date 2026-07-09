@@ -28,7 +28,7 @@ def nan_hill_climb(model, data_loader,criterion, device,rng):
             n_hidden_w
             + n_hidden_b
             + n_decoder_w
-            #+ n_decoder_b
+            + n_decoder_b
         )
 
         #random parameter associated with the 'hidden layer' (that is the encoding and decoding neuron connections)
@@ -77,7 +77,7 @@ def nan_hill_climb(model, data_loader,criterion, device,rng):
 
         else: 
             #index decoder b
-            print("in ablation you should never see this")
+ 
             #layer_module = model.decoder
             parameter_tensor = model.decoder_bias
             #parameter_type = "bias"
@@ -116,7 +116,8 @@ def nan_hill_climb(model, data_loader,criterion, device,rng):
             )
 
             #target inputs are in range [0,1] binary values since sigmoid can't output -1s
-            loss = criterion(x_hat_single, target_inputs)
+            #loss = criterion(x_hat_single, target_inputs)
+            loss= criterion(x_hat_single*2-1, inputs)
 
             epoch_loss += loss.item()
 
@@ -216,11 +217,12 @@ def nan_hill_climb(model, data_loader,criterion, device,rng):
 
         if layer_perturb <= 0.5:
 
-         
             #output from a single selected neuron
             x_hat_single = model.reconstruct_single(inputs,neuron=selected_neuron)
          
-            loss = criterion(x_hat_single, target_inputs)
+            #loss = criterion(x_hat_single, target_inputs)
+
+            loss= criterion(x_hat_single*2-1, inputs)
 
         else:
 
@@ -297,5 +299,3 @@ if parameter < tot_w:
 
         layer = 'hidden'
         layer_module = getattr(model, layer)"""
-
-

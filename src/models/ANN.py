@@ -27,17 +27,55 @@ class ANN(nn.Module):
         nn.init.uniform_(self.output.weight, -1.0, 1.0)
         nn.init.uniform_(self.output.bias, -1.0, 1.0)
 
-        
+
+    def encode(self, x):
+        return self.activation(self.hidden(x))
+    
+    def reconstruct_single(self, x, neuron):
+
+        # hidden activations (batch_size, H)
+        h = self.encode(x)
+
+        # activation of just the selected hidden neuron
+        h_j = h[:, neuron].unsqueeze(1)          # (batch_size,1)
+
+        # decoder weights leaving that neuron
+        w = self.decoder.weight[:, neuron].unsqueeze(0)   # (1,input_dim)
+
+        # full decoder bias
+        b = self.decoder.bias.unsqueeze(0)      # (1,input_dim)
+
+        # reconstruction produced by THIS neuron alone
+        x_hat = self.activation(h_j * w + b)
+
+        return x_hat
+    
+    def regress(self, x):
+
+        h = self.encode(x)
+
+        return self.activation(self.output(h))
+
+    
+
     def forward(self, x):
 
         #latent code
-        x = self.activation(self.hidden(x))
+        #x = self.activation(self.hidden(x))
 
         #reconstructed input
-        x_hat = self.activation(self.decoder(x))
+        #x_hat = self.activation(self.decoder(x))
 
         #regressor head
-        y = self.activation(self.output(x))
+        #y = self.activation(self.output(x))
 
+        #x = self.encode(x)
 
-        return x_hat,y
+        #x_hat = self.activation(self.decoder(x))
+
+        #y = self.activation(self.output(x))
+
+        return self.regress(x)
+
+        #return x_hat,y
+    

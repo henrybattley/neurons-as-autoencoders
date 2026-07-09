@@ -14,17 +14,77 @@ def hill_climb(model, data_loader,criterion, device,rng):
     layer_perturb = rng.random()
     if layer_perturb <= 0.5: #perturb hidden layer
 
-        
-        """ this might need to be computed after we select a parameter that belongs to a certain neuron and then we'll compute the loss of what that neuron produces-- we'll compute both and see which aligns with the paper data"""
+
+        #choose a random hidden node
+        selected_neuron = rng.integers(model.hidden_dim)
+
+        params_per_neuron = (
+        model.input_dim      # encoder weights
+        + 1                  # encoder bias
+        + model.input_dim    # decoder weights
+        + model.input_dim   #decoder biases
+        )
+
+
+        #random parameter associated with a neuron (that is the encoding and decoding neuron connections)
+        idx = rng.integers(params_per_neuron)
+
+        if idx < model.input_dim:
+
+            layer_module = model.hidden
+            parameter_type = "weight"
+
+            row = selected_neuron
+            col = idx
+
+        elif idx == model.input_dim:
+
+            layer_module = model.hidden
+            parameter_type = "bias"
+
+            row = selected_neuron
+
+        elif idx <model.input_dim +model.input_dim + 1:
+
+
+            decoder_idx = idx - (model.input_dim + 1)
+
+            layer_module = model.decoder
+            parameter_type = "weight"
+
+            row = decoder_idx        # reconstructed input dimension
+            col = selected_neuron      # hidden neuron
+
+        else:
+            #decoder biases
+            decoder_bias_idx = idx -(2 * model.input_dim+ 1)
+
+            layer_module = model.decoder
+            parameter_type = "bias"
+
+            row = decoder_bias_idx
+
+    
+
+        """ this ise computed after we select a parameter that belongs to a certain neuron and then we'll compute the loss of what that neuron produces-- we'll compute both and see which aligns with the paper data"""
         epoch_loss = 0.0
         for inputs, labels, target_inputs in data_loader:
             inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
 
-            #x_hat should be the output for one neuron?  -- this model output can be outside of these ifs anyway 
-            x_hat, y = model(inputs)
+            #x_hat should be the output for one neuron?  -
+            #x_hat, _ = model(inputs)
+
+            #output from a single selected neuron
+            x_hat_single = model.reconstruct_single(
+                inputs,
+                neuron=selected_neuron
+            )
 
             #target inputs are in range [0,1] binary values since sigmoid can't output -1s
-            loss = criterion(x_hat, target_inputs)
+            #loss = criterion(x_hat_single, target_inputs)
+
+            #trying different transform
+            loss = criterion(x_hat_single*2-1, inputs)
 
             epoch_loss += loss.item()
 
@@ -32,67 +92,6 @@ def hill_climb(model, data_loader,criterion, device,rng):
 
 
         #taking loss of single neuron output for the layer-based encoder? --quite possibly
-
-
-        #params in hidden layer
-        n_hidden_w = model.hidden.weight.numel()
-        n_hidden_b = model.hidden.bias.numel()
-
-        #params in decoder layer
-        n_decoder_w = model.decoder.weight.numel()
-        n_decoder_b = model.decoder.bias.numel()
-
-        total = (
-            n_hidden_w
-            + n_hidden_b
-            + n_decoder_w
-            + n_decoder_b
-        )
-
-        #random parameter associated with the 'hidden layer' (that is the encoding and decoding neuron connections)
-        idx = rng.integers(total)
-
-        if idx < n_hidden_w:
-            #index the hidden weights to subsequently be pertubed with probability n_hidden_w/total
-
-            layer_module = model.hidden
-            parameter_type = "weight"
-
-            row = idx // model.input_dim #floor divide by the input dims to get the row of the random weight
-            col = idx % model.input_dim # modulo by the input dims to get the column
-            
-
-        elif idx < n_hidden_w + n_hidden_b:
-            #index hidden bias
-
-            layer_module = model.hidden
-            parameter_type = "bias"
-
-            #make row relative to the layer indexing not the whole parameter space indexing
-            row = idx - n_hidden_w
-
-
-        elif idx < n_hidden_w + n_hidden_b + n_decoder_w:
-            #index decoder w
-
-            layer_module = model.decoder
-            parameter_type = "weight"
- 
-            #again make indexing relative to layer 
-            idx -= (n_hidden_w + n_hidden_b)
-
-            #this is more readable : decoder_idx = idx - (n_hidden_w + n_hidden_b)
-
-            row = idx // model.hidden_dim
-            col = idx % model.hidden_dim
-
-        else: 
-            #index decoder b
-
-            layer_module = model.decoder
-            parameter_type = "bias"
-
-            row = idx - (n_hidden_w + n_hidden_b + n_decoder_w)
 
 
 
@@ -106,7 +105,7 @@ def hill_climb(model, data_loader,criterion, device,rng):
             #outputs = model(inputs)
             #loss = criterion(outputs, labels)
      
-            x_hat, y = model(inputs)
+            y = model.regress(inputs)
             loss = criterion(y, labels)
 
             epoch_loss += loss.item()
@@ -146,7 +145,6 @@ def hill_climb(model, data_loader,criterion, device,rng):
             row = 0
 
 
-
     # do the actual perturbations here based on predefined layer parameter positions
     if parameter_type == "weight":
 
@@ -166,13 +164,24 @@ def hill_climb(model, data_loader,criterion, device,rng):
     for inputs, labels, target_inputs  in data_loader:
         inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
     
-        x_hat,y = model(inputs)
+        #x_hat,y = model(inputs)
+
+        #output from a single selected neuron
+        #x_hat_single = model.reconstruct_single(inputs,neuron=selected_neuron)
 
         if layer_perturb <= 0.5:
 
-            loss = criterion(x_hat, target_inputs)
+            #loss = criterion(x_hat, target_inputs)
+            #output from a single selected neuron
+            x_hat_single = model.reconstruct_single(inputs,neuron=selected_neuron)
+         
+            #loss = criterion(x_hat_single, target_inputs)
+
+            loss = criterion(x_hat_single*2-1, inputs)
 
         else:
+
+            y = model.regress(inputs)
 
             loss = criterion(y, labels)
 
