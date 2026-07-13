@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-#dedicated hill climber for the layer based autoencoder network
+#dedicated hill climber for the layer based autoencoder network test
 
 def hill_climb(model, data_loader,criterion, device,rng):
 

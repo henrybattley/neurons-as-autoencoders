@@ -18,6 +18,9 @@ Thumbs.db
 # Results
 results/
 
+#notebooks
+notebooks/
+
 # pytest
 .pytest_cache/
 
