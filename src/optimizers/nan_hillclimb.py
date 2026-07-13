@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 
-#dedicated hill climber for the layer based autoencoder network test
+#dedicated hill climber for the neuron based autoencoder network
 
-def hill_climb(model, data_loader,criterion, device,rng):
+def nan_hill_climb(model, data_loader,criterion, device,rng):
 
     model.to(device)
     model.train()
@@ -24,7 +24,7 @@ def hill_climb(model, data_loader,criterion, device,rng):
         model.input_dim      # encoder weights (one weight per input dim)
         + 1                  # encoder bias (one bias per node)
         + model.input_dim    # decoder weights (one weight per input dim)
-        + model.input_dim   #decoder biases (biases are shared within the decoder layer)
+        + model.input_dim   #decoder biases (a bias per input dim)
         )
 
 
@@ -51,22 +51,30 @@ def hill_climb(model, data_loader,criterion, device,rng):
             #make global parameter index relative to decoder layer weights
             decoder_idx = idx - (model.input_dim + 1)
 
-            layer_module = model.decoder
-            parameter_type = "weight"
+            #layer_module = model.decoder
 
-            row = decoder_idx   # specific weight is the random idx referring to a row within the decoding connection matrix
-            col = selected_neuron #columns are neurons within the decoding connections
+            parameter_tensor = model.decoder_weight
+            parameter_type = "decoder_weight"
+
+            row = selected_neuron  #rows correspond to neurons within the decoding connections
+            col = decoder_idx # specific weight is the random idx referring to a col within the decoding connection matrix 
 
         else:
             #decoder biases
             #make parameter reference relative to decoder layer biases
             decoder_bias_idx = idx -(2 * model.input_dim+ 1)
 
-            layer_module = model.decoder
-            parameter_type = "bias"
+            #layer_module = model.decoder
+
+            parameter_tensor = model.decoder_bias
+            parameter_type = "decoder_bias"
 
             #again biases are within a vector
-            row = decoder_bias_idx
+            #row = decoder_bias_idx
+
+            row = selected_neuron  #rows correspond to neurons within the decoding connections
+            col = decoder_bias_idx # specific bias is the random idx referring to a col within the decoding connection matrix
+
 
 
         # now for the chosen hidden neuron, compute the reconstruction error for the neuron's attempt at reconstructing its input
@@ -132,7 +140,18 @@ def hill_climb(model, data_loader,criterion, device,rng):
         old = layer_module.weight[row, col].item()
         with torch.no_grad():
             layer_module.weight[row, col] += delta
-    else:
+
+    elif parameter_type == "decoder_weight":
+        old = parameter_tensor[row, col].item()
+        with torch.no_grad():
+            parameter_tensor[row, col] += delta
+        
+    elif parameter_type == "decoder_bias":
+        old = parameter_tensor[row, col].item()
+        with torch.no_grad():
+            parameter_tensor[row, col] += delta
+
+    else: #hidden layer bias
         #store the previous bias in memory
         old = layer_module.bias[row].item()
         with torch.no_grad():
@@ -170,34 +189,44 @@ def hill_climb(model, data_loader,criterion, device,rng):
             new_epoch_loss += loss.item()
 
         new_avg_loss = new_epoch_loss / len(data_loader)
+        
 
     if new_avg_loss > avg_loss:
         if parameter_type == 'weight':
             with torch.no_grad():
-                layer_module.weight[row, col] = old #restore previous weight if the weight perturbation caused increase in error
-        else:
-            with torch.no_grad():
-                layer_module.bias[row] = old #restore previous bias if the bias perturbation caused increase in error
+                layer_module.weight[row, col] = old
 
-        
-        return avg_loss,layer_perturb
+        elif parameter_type == 'decoder_weight':
+            with torch.no_grad():
+                parameter_tensor[row, col] = old
+
+        elif parameter_type == 'decoder_bias':
+            with torch.no_grad():
+                parameter_tensor[row, col] = old
+
+        else: #hidden bias restore
+            with torch.no_grad():
+                layer_module.bias[row] = old
+
+        return
+
+
     
     # when perturbed parameter results in the same loss (within the fractional threshold) then chose either new or old parameter at random
     elif abs(new_avg_loss - avg_loss) < 1e-12:
         tie_break = rng.random()
         if parameter_type == 'weight': #if we previously perturbed a weight
-            if tie_break >= 0.5: #restore previous parameter, otherwise by default the new parameter is kept
+            if tie_break >= 0.5:
                 with torch.no_grad():
                     layer_module.weight[row, col] = old
-  
+        elif parameter_type in ("decoder_weight", "decoder_bias"): 
+            if tie_break >= 0.5:
+                with torch.no_grad():
+                    parameter_tensor[row, col] = old
+
         else: #if we previously perturbed a bias
             if tie_break < 0.5:
                 with torch.no_grad():
                     layer_module.bias[row] = old
         
-
-
-
-
-
 
