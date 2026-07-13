@@ -38,14 +38,29 @@ class NAN(nn.Module):
     def encode(self, x):
         return self.activation(self.hidden(x))
     
+
+    def encode_single(self, x, neuron):
+        """
+        Returns the encoding produced by a single hidden neuron.
+
+        Shape: (batch_size, 1)
+        """
+
+        w = self.hidden.weight[neuron].unsqueeze(0)   # (1,input_dim)
+        b = self.hidden.bias[neuron]                  # scalar
+
+        return self.activation(x @ w.T + b)
+    
     
     def reconstruct_single(self, x, neuron):
 
         #each neuron encodes the input (h is the matrix of encodings of shape (N,H)- a row per sample and col per hidden neuron)
-        h = self.encode(x)
+        #h = self.encode(x)
 
         #returns the 2D vector of all N encodings for a neuron (e. g if we indexed h[:, neuron] this would give 1D but we need 2D for the broadcasting we do)
-        h_j = h[:, neuron:neuron+1] #gives shape (n_samples,1)
+        #h_j = h[:, neuron:neuron+1] #gives shape (n_samples,1)
+
+        h_j = self.encode_single(x, neuron)
 
 
         #since every decoder weight belongs to a neuron we simply index the decoder weights by the neuron selected (the row in the decoder weight matrix corresponds to a neuron)

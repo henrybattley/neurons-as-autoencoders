@@ -77,70 +77,39 @@ def train_ANN(  NK_data_train,
         else:
             criterion = torch.nn.MSELoss() 
             criterion.to(device)
-            train_loss,layer_perturb = hillclimb.hill_climb(model, train_loader,criterion, device,rng)
+            hillclimb.hill_climb(model, train_loader,criterion, device,rng)
 
-            encoder_loss = 0.0
+            hidden_loss = 0.0
+            output_loss =0.0
 
-            # do the reconstruction with every neuron one after the other
-            for neuron in range(model.hidden_dim):
+            for inputs, labels, _ in train_loader:
 
-                neuron_loss = 0.0
-
-                for inputs, _, target_inputs in train_loader:
-
-                    inputs = inputs.to(device)
-                    target_inputs = target_inputs.to(device)
-
-                    x_hat = model.reconstruct_single(inputs, neuron)
-
-                    #accumulate the loss
-                    #neuron_loss += criterion(x_hat, target_inputs).item()
-                    neuron_loss += criterion(x_hat*2-1, inputs).item()
-
-                #len of train loader is one here (but we may want batches with other data)
-                neuron_loss /= len(train_loader) 
-
-                encoder_loss += neuron_loss
-
-            #divide by how many neurons in the hidden layer (so we average over the hidden neurons)
-            encoder_loss /= model.hidden_dim
-
-            print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Training Loss: {encoder_loss:.4f}")
-            training_history["encoder_train_loss"].append(encoder_loss)
-
-
-            epoch_loss = 0.0
-            for inputs, labels, target_inputs in train_loader:
-                inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
-                    
-
+                inputs, labels = inputs.to(device), labels.to(device)
+   
+                #take fully connected hidden layer output
+                x_hat = model.reconstruct_layer(inputs)
+                #accumulate the loss
+                hidden_loss += criterion(x_hat*2-1, inputs).item()
+                
+                #take the task output
                 y = model.regress(inputs)
-                loss = criterion(y, labels)
-
-                epoch_loss += loss.item()
-
-            avg_regression_loss = epoch_loss / len(train_loader)
-
-            print(f"Epoch [{epoch + 1}/{n_epochs}], Regression Training Loss: {avg_regression_loss:.4f}")
-            training_history["task_train_loss"].append(avg_regression_loss)        
+                output_loss+= criterion(y, labels).item()
 
 
-        # compute the test loss every epoch
-        #if epoch % 1000 == 0 or epoch==9999:
-        """ 
-        test_epoch_loss = 0.0
-        for inputs, labels in test_loader:
-            inputs, labels = inputs.to(device), labels.to(device)
+            #len of train loader is one here (but we may want batches with other data)
+            hidden_loss /= len(train_loader) 
+
+            output_loss /= len(train_loader)
+
+
+            print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Training Loss: {hidden_loss:.4f}")
+            training_history["encoder_train_loss"].append(hidden_loss)
+
             
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
+            print(f"Epoch [{epoch + 1}/{n_epochs}], Regression Training Loss: {output_loss:.4f}")
+            training_history["task_train_loss"].append(output_loss)   
 
-            test_epoch_loss += loss.item()
-
-        avg_loss = test_epoch_loss / len(test_loader)
-        training_history['test_loss'].append(avg_loss)
-        print(f"Epoch [{epoch + 1}/{n_epochs}], Test Loss: {avg_loss:.4f}")
-        """
+        
 
 
     # Save metrics for the fold if requested
