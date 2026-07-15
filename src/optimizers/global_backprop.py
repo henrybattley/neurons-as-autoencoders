@@ -10,8 +10,7 @@ def train(model, data_loader, criterion, optimizer, device):
     epoch_loss = 0.0
     for inputs, labels in data_loader:
 
-
-
+        """
         t0 = time.perf_counter()
 
         inputs = inputs.to(device, non_blocking=True)
@@ -44,7 +43,7 @@ def train(model, data_loader, criterion, optimizer, device):
             f"step={t4-t3:.4f}"
         )
 
-        break
+        break""" 
 
         epoch_loss += loss.item()
 
