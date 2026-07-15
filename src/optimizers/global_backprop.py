@@ -13,7 +13,7 @@ def train(model, data_loader, criterion, optimizer, device):
         optimizer.zero_grad()
 
         #degub
-        print(inputs.device)
+        #print(inputs.device)
 
         outputs = model(inputs)
         loss = criterion(outputs, labels)
