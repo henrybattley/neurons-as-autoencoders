@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import time
 
 
 def train(model, data_loader, criterion, optimizer, device):
@@ -8,14 +9,41 @@ def train(model, data_loader, criterion, optimizer, device):
 
     epoch_loss = 0.0
     for inputs, labels in data_loader:
-        inputs, labels = inputs.to(device, non_blocking=True), labels.to(device,non_blocking=True)
 
-        optimizer.zero_grad()
+
+        t0 = time.perf_counter()
+
+        inputs = inputs.to(device, non_blocking=True)
+        labels = labels.to(device, non_blocking=True)
+
+        torch.cuda.synchronize()
+        t1 = time.perf_counter()
 
         outputs = model(inputs)
         loss = criterion(outputs, labels)
+
+        torch.cuda.synchronize()
+        t2 = time.perf_counter()
+
+        optimizer.zero_grad()
         loss.backward()
+
+        torch.cuda.synchronize()
+        t3 = time.perf_counter()
+
         optimizer.step()
+
+        torch.cuda.synchronize()
+        t4 = time.perf_counter()
+
+        print(
+            f"copy={t1-t0:.4f} "
+            f"forward={t2-t1:.4f} "
+            f"backward={t3-t2:.4f} "
+            f"step={t4-t3:.4f}"
+        )
+
+        break
 
         epoch_loss += loss.item()
 
