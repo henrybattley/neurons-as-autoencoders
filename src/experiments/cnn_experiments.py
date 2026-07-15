@@ -21,16 +21,28 @@ def train_cnn(  data,
     
 
     #student's gpu is non-CUDA enabled
-    device = torch.device('cuda')
+    #device = torch.device('cuda')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"device is: {device}")
 
     #seed randomness (already performed in notebook but now training is self-contained)
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
 
+    """ 
     train_loader = torch.utils.data.DataLoader( data,
                                                 batch_size=batch_size,
                                                 shuffle=True
-                                                )
+                                                )"""
+    
+    train_loader = torch.utils.data.DataLoader(
+    data,
+    batch_size=batch_size,
+    shuffle=True,
+    num_workers=2,  
+    pin_memory=True,
+    persistent_workers=True,
+)
 
     #sample and retrieve shape for parameterizing model input dims
     sample_x, _= data[0]

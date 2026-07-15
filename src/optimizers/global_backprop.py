@@ -8,7 +8,7 @@ def train(model, data_loader, criterion, optimizer, device):
 
     epoch_loss = 0.0
     for inputs, labels in data_loader:
-        inputs, labels = inputs.to(device), labels.to(device)
+        inputs, labels = inputs.to(device, non_blocking=True), labels.to(device,non_blocking=True)
 
         optimizer.zero_grad()
 
