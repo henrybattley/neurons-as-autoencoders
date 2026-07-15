@@ -3,8 +3,6 @@ import torch
 
 
 def train(model, data_loader, criterion, optimizer, device):
-    model.to(device)
-    model.train()
 
     epoch_loss = 0.0
     for inputs, labels in data_loader:
