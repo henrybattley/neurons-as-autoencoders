@@ -11,6 +11,7 @@ def train(model, data_loader, criterion, optimizer, device):
     for inputs, labels in data_loader:
 
 
+
         t0 = time.perf_counter()
 
         inputs = inputs.to(device, non_blocking=True)
