@@ -7,7 +7,7 @@ import random
 from src.models.ANN import ANN
 from src.datasets.NK import NKLandscape
 from src.optimizers import mlp_backprop
-from src.optimizers import hillclimb
+from src.optimizers import ann_hillclimb
 
 
 #training pipeline with default parameters
@@ -41,11 +41,6 @@ def train_ANN(  NK_data_train,
                                                 batch_size=batch_size,
                                                 shuffle=False if hill_climb else True, #no need to shuffle when hill climbing since we compute activations on whole dataset (not batches)
                                                 )
-    """
-    test_loader = torch.utils.data.DataLoader(  NK_data_test,
-                                                batch_size=batch_size,
-                                                shuffle=False if hill_climb else True, 
-                                                ) """
     
 
     #sample and retrieve shape for parameterizing model input dims
@@ -77,7 +72,7 @@ def train_ANN(  NK_data_train,
         else:
             criterion = torch.nn.MSELoss() 
             criterion.to(device)
-            hillclimb.hill_climb(model, train_loader,criterion, device,rng)
+            ann_hillclimb.ann_hill_climb(model, train_loader,criterion, device,rng)
 
             hidden_loss = 0.0
             output_loss =0.0
@@ -110,15 +105,6 @@ def train_ANN(  NK_data_train,
             training_history["task_train_loss"].append(output_loss)   
 
         
-
-
-    # Save metrics for the fold if requested
-    if fold_id is not None and metrics_dict is not None:
-        metrics_dict[f"{fold_id} {batch_size} {learning_rate}"] = {
-            "train_loss": training_history["train_loss"][-n_epochs:], 
-            "val_loss": training_history["val_loss"][-n_epochs:],
-        }
-
 
     return model, training_history
 

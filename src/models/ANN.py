@@ -36,12 +36,12 @@ class ANN(nn.Module):
         nn.init.uniform_(self.output.weight, -1.0, 1.0)
         nn.init.uniform_(self.output.bias, -1.0, 1.0)
 
-    #fully connected input connections' affine transform and activation (the feature encoding)
+    #fully connected input connections' affine transform and activation (the feature encoding for regression head)
     def encode(self, x):
         # returns hidden activations (of shape (batch_size, H)) (each neuron encodes the input- return is the matrix of encodings of shape (N,H)- a row per sample and col per hidden neuron)
         return self.activation(self.hidden(x))
     
-    #singular selected neuron neuron affine transform and activation (neuron level encoding)
+    #singular selected neuron affine transform and activation (neuron level encoding)
     def encode_single(self, x, neuron):
 
         w = self.hidden.weight[neuron].unsqueeze(0)
@@ -85,26 +85,3 @@ class ANN(nn.Module):
 
         return self.activation(self.output(h))
 
-    
-    """ 
-    def forward(self, x):
-
-        #latent code
-        #x = self.activation(self.hidden(x))
-
-        #reconstructed input
-        #x_hat = self.activation(self.decoder(x))
-
-        #regressor head
-        #y = self.activation(self.output(x))
-
-        #x = self.encode(x)
-
-        #x_hat = self.activation(self.decoder(x))
-
-        #y = self.activation(self.output(x))
-
-        return self.regress(x)
-
-        #return x_hat,y
-    """
