@@ -29,16 +29,17 @@ class ConvFilter(nn.Module):
 
         self.activation = nn.ReLU()
 
-    #encoder_single
-    def encode_single(self, x):
+    #encode input (used by individual filters)
+    def encode(self, x):
 
         h = self.activation(self.encoder(x))
 
         return h
     
-    def reconstruct_single(self, x):
+    #decode the laten feature representation (used by individual filters)
+    def reconstruct(self, x):
 
-        h = self.encode_single(x)
+        h = self.encode(x)
 
         x_hat = torch.sigmoid(self.decoder(h))
 
@@ -55,7 +56,6 @@ class FilterCNN(nn.Module):
         self.padding =padding
         self.n_filters = n_filters
         
-        #self.filters = nn.ModuleList([ConvFilter() for _ in range(n_filters)])
 
         self.filters = nn.ModuleList([ConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
 
@@ -72,7 +72,7 @@ class FilterCNN(nn.Module):
 
         for filt in self.filters:
 
-            h = filt.encode_single(x)
+            h = filt.encode(x)
 
             feature_maps.append(h)
 
@@ -80,6 +80,7 @@ class FilterCNN(nn.Module):
 
         features = self.pool(features)
 
+        #flatten
         features = features.view(features.size(0), -1)
 
 
@@ -89,5 +90,5 @@ class FilterCNN(nn.Module):
     # local reconstruction of ONE filter
     def reconstruct_filter(self, x, filter_idx):
 
-        return self.filters[filter_idx].reconstruct_single(x)
+        return self.filters[filter_idx].reconstruct(x)
 
