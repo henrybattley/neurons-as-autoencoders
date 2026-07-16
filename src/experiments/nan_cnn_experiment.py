@@ -17,8 +17,8 @@ def train_nan_cnn(  data,
                 seed=42):
     
     training_history = {
-    "train_loss": [],
-    "test_loss": [],
+    "encoder_train_loss": [],
+    "task_train_loss": [],
     }
     
 
@@ -46,7 +46,17 @@ def train_nan_cnn(  data,
 )
  
 
-    model = nan_cnn.FilterCNN() 
+    #model = nan_cnn.FilterCNN() 
+
+    model = nan_cnn.FilterCNN(
+        kernel_size=3,
+        stride=2,
+        padding=1,
+        n_filters=n_filters,
+        classes=10
+    )
+
+
     model.to(device)
     
     #criterion = torch.nn.CrossEntropyLoss()
