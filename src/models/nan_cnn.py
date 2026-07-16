@@ -40,7 +40,7 @@ class ConvFilter(nn.Module):
 
         h = self.encode_single(x)
 
-        x_hat = torch.signmoid(self.decoder(h))
+        x_hat = torch.sigmoid(self.decoder(h))
 
         return x_hat
     
