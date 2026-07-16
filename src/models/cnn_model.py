@@ -3,8 +3,45 @@ import torch.nn as nn  # neural network modules
 import torch.nn.functional as F  # useful stateless functions
 
 
+
 class CNN(nn.Module):
-    """
+    def __init__(self, num_classes=10):
+        super(CNN, self).__init__()
+        
+        # 1st conv block (16 feature mappings but same spatial size)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16,kernel_size=3, padding=1)
+        #He initialiasion for all blocks
+        nn.init.kaiming_normal_(self.conv1.weight)
+
+        #2x2 pooling used at first two layers (reduces spacial size but keeps depth)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2) #pooling with strid 2 halfs the number of dimensions
+
+
+        #fully connected layer has flattened input
+        self.fc = nn.Linear(16 * 14 * 14, num_classes)
+        nn.init.kaiming_normal_(self.fc.weight)
+
+        
+    def forward(self, x):
+        #x is (batch, 1, 28, 28)
+        x = F.relu(self.conv1(x))
+        x = self.pool(x)
+
+        #x = F.relu(self.conv2(x))
+        #x = self.pool(x)
+
+        #flatten here
+        x = x.view(x.size(0), -1)  
+
+        x = self.fc(x)
+        return x
+
+
+
+
+
+
+    """ 
     Final model: Simple 3-layer CNN for 28x28 grayscale images.
     
     Architecture overview:
@@ -19,6 +56,7 @@ class CNN(nn.Module):
     - He initialization applied to all conv and linear layers
     - pooling reduces only after first two conv layers
     """
+    """ 
     def __init__(self, num_classes=10):
         super(CNN, self).__init__()
         
@@ -53,8 +91,10 @@ class CNN(nn.Module):
 
         x = self.fc(x)
         return x
-    
-    """ 
+"""
+
+
+""" 
     #function to get the model out to onnx format for visualisation
     def export_onnx(self, filename="cnn.onnx"):
         dummy = torch.randn(1, 1, 28, 28)
@@ -68,5 +108,4 @@ class CNN(nn.Module):
             opset_version=11
         )
         print(f"[OK] Model exported to {filename}")
-        
-        """
+"""
