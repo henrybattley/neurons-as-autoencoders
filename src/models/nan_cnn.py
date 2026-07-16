@@ -40,7 +40,7 @@ class ConvFilter(nn.Module):
 
         h = self.encode_single(x)
 
-        x_hat = self.decoder(h)
+        x_hat = torch.signmoid(self.decoder(h))
 
         return x_hat
     
@@ -48,7 +48,7 @@ class ConvFilter(nn.Module):
 class FilterCNN(nn.Module):
 
         
-    def __init__(self, kernel_size:int, stride: int, padding:int, filters:nn.ModuleList, n_filters:int,classes:int):
+    def __init__(self, kernel_size:int, stride: int, padding:int, n_filters:int,classes:int):
         super().__init__()
         self.kernel_size = kernel_size
         self.stride = stride
