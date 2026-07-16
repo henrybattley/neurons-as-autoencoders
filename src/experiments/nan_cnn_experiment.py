@@ -2,8 +2,11 @@ import os
 import numpy as np
 import torch, torchvision
 import random
+import time
 
 from src.models import nan_cnn
+
+
 
 #from src.optimizers import global_backprop
 #from src.optimizers import nan_cnn_local_gd
@@ -46,8 +49,8 @@ def train_nan_cnn(  data,
     persistent_workers=True,
 )
  
-
-    #model = nan_cnn.FilterCNN() 
+    #starting time from model definition
+    start = time.perf_counter()
 
     model = nan_cnn.FilterCNN(
         kernel_size=3,
@@ -60,7 +63,7 @@ def train_nan_cnn(  data,
 
     model.to(device)
     
-    #criterion = torch.nn.CrossEntropyLoss()
+
     encoder_criterion = torch.nn.MSELoss()
     encoder_criterion.to(device)
 
@@ -151,8 +154,9 @@ def train_nan_cnn(  data,
         training_history["train_accuracy"].append(classification_accuracy)
         
         
-            
-    return model, training_history
+    elapsed = time.perf_counter() - start
+
+    return model, training_history, elapsed
 
 
 """ training loop that trains filters by running entirely on train data before moving to the next filter then classifier, then repeat
