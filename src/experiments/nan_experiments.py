@@ -7,7 +7,7 @@ import random
 from src.models.NAN import NAN
 from src.models.local_gd_nan import NAN_GD
 from src.datasets.NK import NKLandscape
-from src.optimizers import mlp_backprop
+from src.optimizers import global_backprop
 from src.optimizers import nan_hillclimb
 from src.optimizers import nan_gradient_descent
 
@@ -55,7 +55,7 @@ def train_NAN(  data,
         criterion = torch.nn.MSELoss() #criterion is actually equal to our funky multiobjective term here I think
         criterion.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-        train_loss = mlp_backprop.train(model, train_loader, criterion, optimizer, device)
+        train_loss = global_backprop.train(model, train_loader, criterion, optimizer, device)
 
         # another training epoch loop:...
         print(f"Epoch [{epoch + 1}/{n_epochs}], Training Loss: {train_loss:.4f}")

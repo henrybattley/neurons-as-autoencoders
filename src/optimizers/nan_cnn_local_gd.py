@@ -16,7 +16,8 @@ def train_filters(model, data_loader, criterion, optimizer, device, selected_fil
         optimizer.zero_grad()
 
         #output from a single selected filter
-        x_hat_single = model.reconstruct_single(inputs,neuron=filter)
+        #x_hat_single = model.reconstruct_single(inputs,neuron=selected_filter)
+        x_hat_single = model.reconstruct_filter(x=inputs,filter_idx=selected_filter)
 
         #decoder ouput needs to be scaled to [-1,1] range
         loss = criterion(x_hat_single, inputs)
@@ -42,7 +43,8 @@ def train_classifier(model, data_loader, criterion, optimizer, device):
 
         optimizer.zero_grad()
 
-        y= model.classify(inputs)
+        #do the forward to get the classification
+        y= model(inputs)
 
         loss = criterion(y, labels)
         loss.backward()
