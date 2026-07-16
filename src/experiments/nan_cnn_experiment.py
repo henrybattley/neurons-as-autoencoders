@@ -50,7 +50,7 @@ def train_nan_cnn(  data,
 
     model = nan_cnn.FilterCNN(
         kernel_size=3,
-        stride=2,
+        stride=1,
         padding=1,
         n_filters=n_filters,
         classes=10
@@ -77,35 +77,6 @@ def train_nan_cnn(  data,
 
     #only touch weights of the fully connected layer
     classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=learning_rate)
-
-
-    """ training loop that trains filters by running entirely on train data before moving to the next filter then classifier, then repeat
-    # Training loop
-    for epoch in range(n_epochs):
-
-        encoder_loss=0.0
-
-        for filter in range(n_filters):
-
-            train_loss = nan_cnn_local_gd.train_filters(model, train_loader, encoder_criterion,
-                                                        filter_optimizers[filter], device, filter)
-
-            encoder_loss += train_loss
-
-        #divide by how many neurons in the hidden layer (so we average over the hidden neurons)
-        encoder_loss /= n_filters
-        
-        print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Training Loss: {encoder_loss:.4f}")
-        training_history["encoder_train_loss"].append(encoder_loss)
-
-        epoch_loss = 0.0
-    
-        train_loss = nan_cnn_local_gd.train_classifier(model, train_loader, classifer_criterion, classifier_optimizer, device)
-
-
-        print(f"Epoch [{epoch + 1}/{n_epochs}], Task Training Loss: {train_loss:.4f}")
-        training_history["task_train_loss"].append(train_loss)
-    """ 
 
     for epoch in range(n_epochs):
 
@@ -168,3 +139,32 @@ def train_nan_cnn(  data,
         
             
     return model, training_history
+
+
+""" training loop that trains filters by running entirely on train data before moving to the next filter then classifier, then repeat
+    # Training loop
+    for epoch in range(n_epochs):
+
+        encoder_loss=0.0
+
+        for filter in range(n_filters):
+
+            train_loss = nan_cnn_local_gd.train_filters(model, train_loader, encoder_criterion,
+                                                        filter_optimizers[filter], device, filter)
+
+            encoder_loss += train_loss
+
+        #divide by how many neurons in the hidden layer (so we average over the hidden neurons)
+        encoder_loss /= n_filters
+        
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Training Loss: {encoder_loss:.4f}")
+        training_history["encoder_train_loss"].append(encoder_loss)
+
+        epoch_loss = 0.0
+    
+        train_loss = nan_cnn_local_gd.train_classifier(model, train_loader, classifer_criterion, classifier_optimizer, device)
+
+
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Task Training Loss: {train_loss:.4f}")
+        training_history["task_train_loss"].append(train_loss)
+    """ 
