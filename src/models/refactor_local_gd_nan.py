@@ -50,8 +50,7 @@ class refactor_NAN_GD(nn.Module):
         self.activation = nn.Sigmoid()
 
 
-        
-
+    
     def encode_single(self, x):
 
         h = self.activation(

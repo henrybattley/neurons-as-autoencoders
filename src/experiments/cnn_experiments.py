@@ -9,6 +9,8 @@ from src.models import nan_cnn
 from src.optimizers import global_backprop
 from src.optimizers import nan_cnn_local_gd
 
+import time
+
 
 #Training pipeline, when hill_climb=True training follows that as defined by Bull 
 def train_cnn(  data, 
@@ -47,12 +49,10 @@ def train_cnn(  data,
     persistent_workers=True,
 )
 
-    #sample and retrieve shape for parameterizing model input dims
-    sample_x, _= data[0]
-    input_dim = sample_x.shape[0]
 
-    print(f"input dims are {input_dim}")
 
+    #starting timing from where the models differ
+    start = time.perf_counter()
 
     model = cnn_model.CNN()
     model.to(device)
@@ -61,6 +61,7 @@ def train_cnn(  data,
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     # Training loop
+
     for epoch in range(n_epochs):
             
         train_loss,accuracy = global_backprop.train(model, train_loader, criterion, optimizer, device)
@@ -71,7 +72,7 @@ def train_cnn(  data,
         training_history["train_accuracy"].append(accuracy)
 
 
-
-    return model, training_history
+    elapsed = time.perf_counter() - start
+    return model, training_history,elapsed
 
 
