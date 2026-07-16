@@ -6,7 +6,7 @@ import random
 
 from src.models.mlp import MLP
 from src.datasets.NK import NKLandscape
-from src.optimizers import mlp_backprop
+from src.optimizers import global_backprop
 from src.optimizers import MLP_hillclimb
 
 
@@ -75,7 +75,7 @@ def train_MLP(  NK_data_train,
     for epoch in range(n_epochs):
             
         if hill_climb == False:
-            train_loss = mlp_backprop.train(model, train_loader, criterion, optimizer, device)
+            train_loss = global_backprop.train(model, train_loader, criterion, optimizer, device)
 
         else:
             train_loss = MLP_hillclimb.mlp_hill_climb(model, train_loader, criterion, device,rng)

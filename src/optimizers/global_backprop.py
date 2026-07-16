@@ -5,6 +5,9 @@ import torch
 def train(model, data_loader, criterion, optimizer, device):
 
     epoch_loss = 0.0
+    correct = 0
+    total = 0
+
     for inputs, labels in data_loader:
         inputs, labels = inputs.to(device, non_blocking=True), labels.to(device,non_blocking=True)
 
@@ -20,8 +23,15 @@ def train(model, data_loader, criterion, optimizer, device):
 
         epoch_loss += loss.item()
 
+        # Classification accuracy
+        predictions = torch.argmax(outputs, dim=1)
+        correct += (predictions == labels).sum().item()
+        total += labels.size(0)
+
     avg_loss = epoch_loss / len(data_loader)
-    return avg_loss
+    classification_accuracy = 100.0 * correct / total
+    
+    return avg_loss, classification_accuracy
 
 """ may come in useful later for test set? 
 def eval(model, data_loader, criterion, device):

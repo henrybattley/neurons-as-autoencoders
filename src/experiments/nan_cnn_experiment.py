@@ -19,6 +19,7 @@ def train_nan_cnn(  data,
     training_history = {
     "encoder_train_loss": [],
     "task_train_loss": [],
+    "train_accuracy": []
     }
     
 
@@ -83,6 +84,9 @@ def train_nan_cnn(  data,
         encoder_epoch_loss =0.0
         classifier_epoch_loss =0.0
 
+        correct = 0
+        total = 0
+
         for images, labels in train_loader:
 
             images = images.to(device)
@@ -116,6 +120,12 @@ def train_nan_cnn(  data,
             classifier_optimizer.step()
 
             classifier_epoch_loss += loss.item()
+
+            # Classification accuracy
+            predictions = torch.argmax(logits, dim=1)
+            correct += (predictions == labels).sum().item()
+            total += labels.size(0)
+
         
 
         #divide by the batch size and then the n filters
@@ -125,16 +135,20 @@ def train_nan_cnn(  data,
 
 
         avg_classifier_loss = classifier_epoch_loss / len(train_loader)
+        classification_accuracy = 100.0 * correct / total
 
 
     
         #the average reconstruction loss per filter per minibatch.
         print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Training Loss: {avg_encoder_loss:.4f}")
+
         training_history["encoder_train_loss"].append(avg_encoder_loss)
 
-        print(f"Epoch [{epoch + 1}/{n_epochs}], Task Training Loss: {avg_classifier_loss:.4f}")
-        training_history["task_train_loss"].append(avg_classifier_loss)
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Task Training Loss: {avg_classifier_loss:.4f}, Accuracy: {classification_accuracy:.2f}%")
 
+        training_history["task_train_loss"].append(avg_classifier_loss)
+        
+        training_history["train_accuracy"].append(classification_accuracy)
         
         
             

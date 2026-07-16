@@ -9,7 +9,7 @@ class CNN(nn.Module):
         super(CNN, self).__init__()
         
         # 1st conv block (16 feature mappings but same spatial size)
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16,kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16,kernel_size=3,stride=1, padding=1)
         #He initialiasion for all blocks
         nn.init.kaiming_normal_(self.conv1.weight)
 
