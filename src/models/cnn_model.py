@@ -27,14 +27,85 @@ class CNN(nn.Module):
         x = F.relu(self.conv1(x))
         x = self.pool(x)
 
-        #x = F.relu(self.conv2(x))
-        #x = self.pool(x)
 
         #flatten here
         x = x.view(x.size(0), -1)  
 
         x = self.fc(x)
         return x
+    
+    
+    
+class ConvBlock(nn.Module):
+
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+
+        self.conv = nn.Conv2d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=3,
+            stride=1,
+            padding=1
+        )
+
+        nn.init.kaiming_normal_(self.conv.weight)
+        nn.init.zeros_(self.conv.bias)
+
+    def forward(self, x):
+        return F.relu(self.conv(x))
+
+
+class DeeperCNN(nn.Module):
+
+    def __init__(
+        self,
+        depth=10,
+        n_filters=16,
+        num_classes=10
+    ):
+        super().__init__()
+
+        self.blocks = nn.ModuleList()
+
+        # First convolution
+        self.blocks.append(
+            ConvBlock(
+                in_channels=1,
+                out_channels=n_filters
+            )
+        )
+
+        # Remaining convolutions
+        for _ in range(depth - 1):
+
+            self.blocks.append(
+                ConvBlock(
+                    in_channels=n_filters,
+                    out_channels=n_filters
+                )
+            )
+
+        self.pool = nn.MaxPool2d(2, 2)
+
+        self.fc = nn.Linear(
+            n_filters * 14 * 14,
+            num_classes
+        )
+
+        nn.init.kaiming_normal_(self.fc.weight)
+        nn.init.zeros_(self.fc.bias)
+
+    def forward(self, x):
+
+        for block in self.blocks:
+            x = block(x)
+
+        x = self.pool(x)
+
+        x = x.view(x.size(0), -1)
+
+        return self.fc(x)
 
 
 
