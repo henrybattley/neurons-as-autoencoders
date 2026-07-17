@@ -14,6 +14,7 @@ import time
 
 #Training pipeline, when hill_climb=True training follows that as defined by Bull 
 def train_cnn(  data, 
+                n_filters,
                 n_epochs=100, 
                 batch_size=64,
                 learning_rate=0.001,
@@ -49,7 +50,7 @@ def train_cnn(  data,
     #starting timing from where the models differ
     start = time.perf_counter()
 
-    model = cnn_model.CNN()
+    model = cnn_model.CNN(n_filters=n_filters)
     model.to(device)
     criterion = torch.nn.CrossEntropyLoss()
     criterion.to(device)
