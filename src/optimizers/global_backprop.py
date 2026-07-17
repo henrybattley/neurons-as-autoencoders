@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-
+""" 
 def train(model, data_loader, criterion, optimizer, device):
 
     epoch_loss = 0.0
@@ -31,7 +31,43 @@ def train(model, data_loader, criterion, optimizer, device):
     avg_loss = epoch_loss / len(data_loader)
     classification_accuracy = 100.0 * correct / total
     
-    return avg_loss, classification_accuracy
+    return avg_loss, classification_accuracy"""
+
+def train(model, data_loader, criterion, optimizer, device):
+    model.train()
+    epoch_loss = 0.0
+    correct = 0
+    total_samples = 0
+
+    for inputs, labels in data_loader:
+        inputs = inputs.to(device, non_blocking=True)
+        labels = labels.to(device, non_blocking=True)
+
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        # 1. Keep everything on the GPU as a raw tensor during the loop
+        epoch_loss += loss.detach() 
+
+        # 2. Calculate correctness entirely on the GPU
+        _, predicted = torch.max(outputs, 1)
+        correct += (predicted == labels).sum()
+        total_samples += labels.size(0)
+
+    # 3. ONLY call .item() ONCE at the very end of the entire epoch!
+    avg_loss = epoch_loss.item() / len(data_loader)
+    accuracy = correct.item() / total_samples
+
+    return avg_loss, accuracy
+
+
+
+
+
+
 
 """ may come in useful later for test set? 
 def eval(model, data_loader, criterion, device):
