@@ -43,7 +43,7 @@ def train_cnn(  data,
     shuffle=True,
     num_workers=0,  
     pin_memory=True,
-    persistent_workers=True,
+  
 )
 
 
