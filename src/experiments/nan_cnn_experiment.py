@@ -46,7 +46,7 @@ def train_nan_cnn(  data,
     data,
     batch_size=batch_size,
     shuffle=True,
-    num_workers=2,  
+    num_workers=0,  
     pin_memory=True,
     persistent_workers=True,
 )
