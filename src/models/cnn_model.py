@@ -5,11 +5,11 @@ import torch.nn.functional as F  # useful stateless functions
 
 
 class CNN(nn.Module):
-    def __init__(self, num_classes=10):
+    def __init__(self, n_filters, num_classes=10, ):
         super(CNN, self).__init__()
         
-        # 1st conv block (16 feature mappings but same spatial size)
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16,kernel_size=3,stride=1, padding=1)
+        # 1st conv block (n_filters feature mappings but same spatial size)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=n_filters,kernel_size=3,stride=1, padding=1)
         #He initialiasion for all blocks
         nn.init.kaiming_normal_(self.conv1.weight)
 
@@ -18,7 +18,7 @@ class CNN(nn.Module):
 
 
         #fully connected layer has flattened input
-        self.fc = nn.Linear(16 * 14 * 14, num_classes)
+        self.fc = nn.Linear(n_filters * 14 * 14, num_classes)
         nn.init.kaiming_normal_(self.fc.weight)
 
         
