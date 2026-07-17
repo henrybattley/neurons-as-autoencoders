@@ -6,6 +6,8 @@ import time
 
 from src.models import nan_cnn
 
+torch.backends.cudnn.benchmark = True
+
 
 
 #from src.optimizers import global_backprop
@@ -48,6 +50,10 @@ def train_nan_cnn(  data,
     pin_memory=True,
     persistent_workers=True,
 )
+    
+
+
+    
  
     #starting time from model definition
     start = time.perf_counter()
@@ -62,6 +68,9 @@ def train_nan_cnn(  data,
 
 
     model.to(device)
+
+    if hasattr(torch, 'compile'):
+        model = torch.compile(model)
     
 
     encoder_criterion = torch.nn.MSELoss()

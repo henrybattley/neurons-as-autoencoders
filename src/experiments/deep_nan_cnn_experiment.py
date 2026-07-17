@@ -13,7 +13,7 @@ from src.models import deep_nan_cnn
 #from src.optimizers import nan_cnn_local_gd
 
 #Training pipeline, when hill_climb=True training follows that as defined by Bull 
-def train_nan_cnn(  data, 
+def train_deep_nan_cnn(  data, 
                 n_epochs=100, 
                 batch_size=64,
                 learning_rate=0.001,

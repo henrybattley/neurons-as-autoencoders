@@ -11,6 +11,7 @@ from src.optimizers import nan_cnn_local_gd
 
 import time
 
+torch.backends.cudnn.benchmark = True
 
 #Training pipeline, when hill_climb=True training follows that as defined by Bull 
 def train_cnn(  data, 
@@ -115,6 +116,10 @@ def train_deep_cnn(  data,
     num_classes=10
     )
     model.to(device)
+
+    if hasattr(torch, 'compile'):
+        model = torch.compile(model)
+
     model.train()
     criterion = torch.nn.CrossEntropyLoss()
     criterion.to(device)
