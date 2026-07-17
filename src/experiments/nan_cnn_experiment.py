@@ -69,8 +69,6 @@ def train_nan_cnn(  data,
 
     model.to(device)
 
-    if hasattr(torch, 'compile'):
-        model = torch.compile(model)
     
 
     encoder_criterion = torch.nn.MSELoss()
