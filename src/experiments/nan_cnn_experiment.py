@@ -128,7 +128,7 @@ def train_nan_cnn(  data,
 
             #logits = model(images)
 
-            logits = model.classigy(features)
+            logits = model.classify(features)
 
 
             loss = classifier_criterion(logits, labels)
