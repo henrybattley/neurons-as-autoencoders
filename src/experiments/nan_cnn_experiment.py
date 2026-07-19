@@ -102,13 +102,21 @@ def train_nan_cnn(  data,
             images = images.to(device)
             labels = labels.to(device)
 
+            feature_maps =[]
+
             for j in range(n_filters):
 
                 optimizer = filter_optimizers[j]
 
                 optimizer.zero_grad()
 
-                x_hat = model.reconstruct_filter(images, j)
+                h = model.filters[j].encode(images)
+
+                feature_maps.append(h.detach())
+
+                x_hat = model.filters[j].decode(h)
+
+                #x_hat = model.reconstruct_filter(images, j)
 
                 loss = encoder_criterion(x_hat, images)
 
@@ -122,9 +130,16 @@ def train_nan_cnn(  data,
             with torch.no_grad():
                 features = model.extract_features(images)
 
-            features = features.detach() 
+            #features = features.detach() 
 
-            classifier_optimizer.zero_grad()
+            #classifier_optimizer.zero_grad()
+
+            features = torch.cat(feature_maps, dim=1)
+
+            features = model.pool(features)
+
+            features = features.flatten(1)
+            
 
             #logits = model(images)
 
