@@ -30,11 +30,19 @@ class ConvFilter(nn.Module):
         self.activation = nn.ReLU()
 
     #encode input (used by individual filters)
-    def encode(self, x):
+    """ def encode(self, x):
 
         h = self.activation(self.encoder(x))
 
-        return h
+        return h"""
+    
+    def encode(self, x):
+
+        return self.activation(self.encoder(x))
+
+    def decode(self, h):
+
+        return torch.sigmoid(self.decoder(h))
     
     #decode the laten feature representation (used by individual filters)
     def reconstruct(self, x):
