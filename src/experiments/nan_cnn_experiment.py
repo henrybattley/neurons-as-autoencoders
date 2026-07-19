@@ -119,9 +119,17 @@ def train_nan_cnn(  data,
                 encoder_epoch_loss += loss.item()
             
 
+            with torch.no_grad():
+                features = model.extract_features(images)
+
+            features = features.detach() 
+
             classifier_optimizer.zero_grad()
 
-            logits = model(images)
+            #logits = model(images)
+
+            logits = model.classigy(features)
+
 
             loss = classifier_criterion(logits, labels)
 
