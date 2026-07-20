@@ -37,8 +37,9 @@ class ConvFilter(nn.Module):
 
         return h
     
-    #decode the latent feature representation (used by individual filters)
-    def reconstruct(self, x):
+    #calls encode and decode the latent feature representation (used by individual filters)
+    
+    def forward(self, x):
 
         h = self.encode(x)
 
@@ -46,6 +47,7 @@ class ConvFilter(nn.Module):
         x_hat = torch.sigmoid(self.decoder(h))
 
         return x_hat
+    
     
 """defines the network of ConvFilters"""
 class FilterCNN(nn.Module):
@@ -91,64 +93,45 @@ class FilterCNN(nn.Module):
         self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
 
 
-    
-    """ 
-    def forward(self,x):
-
-        feature_maps = []
-
-        for filt in self.filters:
-
-            h = filt.encode(x)
-
-            feature_maps.append(h)
-
-        features = torch.cat(feature_maps, dim=1)
-
-        features = self.pool(features)
-
-        #flatten
-        features = features.view(features.size(0), -1)
-
-
-        return self.fc(features)
-    """
-
     # local reconstruction of one filter
-    def reconstruct_filter(self, x, filter_idx):
 
-        return self.filters[filter_idx].reconstruct(x)
+    def reconstruct(self, x, filter_idx):
+
+        #we are now referring to the individual model forward which does the reconstruction
+        return self.filters[filter_idx](x)
     
-
+    
+    
     def extract_features(self, x):
 
-        feature_maps = []
-
-        for filt in self.filters:
-            feature_maps.append(filt.encode(x))
-
+        feature_maps = [f.encode(x) for f in self.filters]
         features = torch.cat(feature_maps, dim=1)
         features = self.pool(features)
-        features = features.view(features.size(0), -1)
-
+        features = features.flatten(1)
         return features
     
 
     def classify(self, features):
-
         return self.fc(features)
 
 
-    """prior to my bug fixing:
-    
-    class ConvFilter(nn.Module):
+    def forward(self, x):
+        return self.classify(self.extract_features(x))
 
+
+
+
+
+
+    """prior to my trying to profile 
+
+class ConvFilter(nn.Module):
     
     def __init__(self, kernel_size=3,stride=1,padding=1):
 
         super().__init__()
 
-        # encoder
+        # encoder 
         self.encoder = nn.Conv2d(
             in_channels=1,
             out_channels=1,
@@ -157,7 +140,7 @@ class FilterCNN(nn.Module):
             padding=padding
         )
 
-        # decoder
+        # decoder, uses transpose convolution to restore input dimensions
         self.decoder = nn.ConvTranspose2d(
             in_channels=1,
             out_channels=1,
@@ -166,6 +149,7 @@ class FilterCNN(nn.Module):
             padding=padding
         )
 
+        #standard activation within convolutional networks is relu
         self.activation = nn.ReLU()
 
     #encode input (used by individual filters)
@@ -175,60 +159,99 @@ class FilterCNN(nn.Module):
 
         return h
     
-    #decode the laten feature representation (used by individual filters)
+    #calls encode and decode the latent feature representation (used by individual filters)
+
     def reconstruct(self, x):
 
         h = self.encode(x)
 
+        #experiment with different activation here
         x_hat = torch.sigmoid(self.decoder(h))
 
         return x_hat
     
+
     
+#defines the network of ConvFilters
 class FilterCNN(nn.Module):
 
         
-    def __init__(self, kernel_size:int, stride: int, padding:int, n_filters:int,classes:int):
+    def __init__(
+            self, 
+            input_dims:int, 
+            kernel_size:int, 
+            stride: int, 
+            padding:int, 
+            n_filters:int,
+            classes:int, 
+            pool_kernel_size:int, 
+            pool_stride:int
+        ):
+        
         super().__init__()
+
+        self.input_dims = input_dims
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding =padding
         self.n_filters = n_filters
+        self.classes = classes
+        self.pool_kernel_size=pool_kernel_size
+        self.pool_stride = pool_stride
         
-
+        #define the list of autoencoder filter submodules 
         self.filters = nn.ModuleList([ConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
 
-        #self.pool = nn.MaxPool2d(kernel_size=kernel_size, stride=stride)
-        self.pool = nn.MaxPool2d(2,2)
+
+        self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
+
+        #only works with square input..
+        conv_dim = ((input_dims + 2*padding - kernel_size) // stride) + 1             
+
+        pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1                
+
 
         #the classifier output how do we parametize these dimensions to change with input params
-        self.fc = nn.Linear(n_filters * 14 * 14,classes)
+        #self.fc = nn.Linear(n_filters * 14 * 14, classes)
+        self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
 
+
+
+
+    # local reconstruction of one filter
+
+    def reconstruct_filter(self, x, filter_idx):
+
+        return self.filters[filter_idx].reconstruct(x)
+
+
+    def reconstruct(self, x, filter_idx):
+
+        #we are now referring to the individual model forward which does the reconstruction
+        return self.filters[filter_idx](x)
     
-    # NEED TO ADD SOME DETACH LOGIC HERE SUCH THAT GRADIENTS FOR THE FILTERS ARE NOT COMPUTED (ALTHOUGH OUR OPTIMISER DOESN'T UPDATE THOSE PARAMS, THE GRADS COULD STILL BE COMPUTED?)?
-    def forward(self,x):
+
+  
+    def extract_features(self, x):
 
         feature_maps = []
 
         for filt in self.filters:
-
-            h = filt.encode(x)
-
-            feature_maps.append(h)
+            #each filter encodes its input (since now we are dealing with an updated version of the filter, we need to call the new forward computation)
+            feature_maps.append(filt.encode(x))
 
         features = torch.cat(feature_maps, dim=1)
-
         features = self.pool(features)
-
-        #flatten
         features = features.view(features.size(0), -1)
 
 
+        return features
+    """
+
+    """ 
+    def classify(self, features):
+
         return self.fc(features)
+    """
     
-
-    # local reconstruction of ONE filter
-    def reconstruct_filter(self, x, filter_idx):
-
-        return self.filters[filter_idx].reconstruct(x)"""
-
+    

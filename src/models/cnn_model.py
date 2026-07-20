@@ -5,20 +5,48 @@ import torch.nn.functional as F  # useful stateless functions
 
 
 class CNN(nn.Module):
-    def __init__(self, n_filters, num_classes=10, ):
+    def __init__(self,
+                 input_dims,
+                 kernel_size,
+                 stride,
+                 padding, 
+                 n_filters, 
+                 classes,
+                 pool_kernel_size,
+                 pool_stride 
+    ):
         super(CNN, self).__init__()
+
+        self.input_dims = input_dims
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding =padding
+        self.n_filters = n_filters
+        self.classes = classes
+        self.pool_kernel_size=pool_kernel_size
+        self.pool_stride = pool_stride
+
         
         # 1st conv block (n_filters feature mappings but same spatial size)
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=n_filters,kernel_size=3,stride=1, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=1, 
+                               out_channels=n_filters,
+                               kernel_size=kernel_size,
+                               stride=stride, 
+                               padding=padding)
+        
         #He initialiasion for all blocks
         nn.init.kaiming_normal_(self.conv1.weight)
 
         #2x2 pooling used at first two layers (reduces spacial size but keeps depth)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2) #pooling with strid 2 halfs the number of dimensions
+        self.pool = nn.MaxPool2d(kernel_size=pool_kernel_size, stride=pool_stride) #pooling with strid 2 halfs the number of dimensions
 
+        #only works with square input..
+        conv_dim = ((input_dims + 2*padding - kernel_size) // stride) + 1             
+        pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1        
 
         #fully connected layer has flattened input
-        self.fc = nn.Linear(n_filters * 14 * 14, num_classes)
+        self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
+
         nn.init.kaiming_normal_(self.fc.weight)
 
         

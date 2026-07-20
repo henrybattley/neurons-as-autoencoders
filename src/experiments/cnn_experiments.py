@@ -15,11 +15,20 @@ torch.backends.cudnn.benchmark = True
 
 #Training pipeline, when hill_climb=True training follows that as defined by Bull 
 def train_cnn(  data, 
-                n_filters,
+                input_dims,
                 n_epochs=100, 
                 batch_size=64,
                 learning_rate=0.001,
+                n_filters=16,
+                stride=1,
+                padding=1,
+                kernel_size=3,
+                pool_kernel_size=2,
+                pool_stride=2,
+                n_classes=10,
                 seed=42):
+    
+
     
     training_history = {
     "train_loss": [],
@@ -36,6 +45,9 @@ def train_cnn(  data,
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
 
+        
+    #starting time from data loading
+    start = time.perf_counter()
     
     train_loader = torch.utils.data.DataLoader(
     data,
@@ -43,16 +55,20 @@ def train_cnn(  data,
     shuffle=True,
     num_workers=0,  
     pin_memory=True,
-  
-)
+    )
 
 
+    model = cnn_model.CNN(
+        input_dims=input_dims,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        n_filters=n_filters,
+        pool_kernel_size=pool_kernel_size,
+        pool_stride=pool_stride,
+        classes=n_classes
+    ).to(device)
 
-    #starting timing from where the models differ
-    start = time.perf_counter()
-
-    model = cnn_model.CNN(n_filters=n_filters)
-    model.to(device)
     criterion = torch.nn.CrossEntropyLoss()
     criterion.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -131,7 +147,7 @@ def train_deep_cnn(  data,
             
         train_loss,accuracy = global_backprop.train(model, train_loader, criterion, optimizer, device)
 
-        print(f"Epoch [{epoch + 1}/{n_epochs}], Training Loss: {train_loss:.4f}, Training Accuracy: {accuracy:.2f}")
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Training Loss: {train_loss:.4f}, Training Accuracy: {accuracy:.4f}")
 
         training_history["train_loss"].append(train_loss)
         training_history["train_accuracy"].append(accuracy)

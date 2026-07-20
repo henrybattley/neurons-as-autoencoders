@@ -60,6 +60,7 @@ def train_nan_cnn(  data,
         pool_stride=pool_stride,
         classes=n_classes
     ).to(device)
+    
 
     #autoencoding loss is MSE of reconstruction vs input
     encoder_criterion = torch.nn.MSELoss().to(device)
@@ -102,7 +103,7 @@ def train_nan_cnn(  data,
 
                 optimizer.zero_grad()
 
-                x_hat = model.reconstruct_filter(images, j)
+                x_hat = model.reconstruct(images, j)
 
                 loss = encoder_criterion(x_hat, images)
 
@@ -114,15 +115,26 @@ def train_nan_cnn(  data,
             
             #after filters have updated as per their gradient info, 
             # perform individual forward passes through the filters, concatenate and extract resultant feature maps
-            with torch.no_grad():   #be sure not to compute gradients of forward passes
-                features = model.extract_features(images)
+            #with torch.no_grad():   #be sure not to compute gradients of forward passes
+                #features = model.extract_features(images)
 
             #features = features.detach() 
 
+
             classifier_optimizer.zero_grad()
 
-            logits = model.classify(features)
+            #logits =model(images)
 
+            #logits = model.classify(features)
+
+            
+
+
+            with torch.no_grad():
+                features = model.extract_features(images)
+
+            logits = model.classify(features)
+            
             loss = classifier_criterion(logits, labels)
 
             loss.backward()
