@@ -37,18 +37,6 @@ class GroupedLocalAutoencoders(nn.Module):
         self.pool = nn.MaxPool2d(2, 2)
         self.fc = nn.Linear(n_filters * 14 * 14, classes)
 
-        
-        nn.init.uniform_(self.encoder.weight, -1.0, 1.0)
-        nn.init.uniform_(self.encoder.bias, -1.0, 1.0) 
-
-        nn.init.uniform_(self.decoder.weight, -1.0, 1.0)
-        nn.init.uniform_(self.decoder.bias, -1.0, 1.0)
-        
-        nn.init.uniform_(self.fc.weight, -1.0, 1.0)
-        nn.init.uniform_(self.fc.bias, -1.0, 1.0)
-
-
-
 
 
 
