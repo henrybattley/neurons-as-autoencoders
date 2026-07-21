@@ -52,7 +52,6 @@ class ConvFilter(nn.Module):
 """defines the network of ConvFilters"""
 class FilterCNN(nn.Module):
 
-        
     def __init__(
             self, 
             input_dims:int, 
@@ -92,6 +91,7 @@ class FilterCNN(nn.Module):
         #self.fc = nn.Linear(n_filters * 14 * 14, classes)
         self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
 
+    
 
     # local reconstruction of one filter
 
@@ -117,7 +117,6 @@ class FilterCNN(nn.Module):
 
     def forward(self, x):
         return self.classify(self.extract_features(x))
-
 
 
 
