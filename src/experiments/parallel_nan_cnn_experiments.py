@@ -62,7 +62,11 @@ def train_parallel_nan_cnn(  data,
         classes=n_classes
     ).to(device)"""
 
-    model = parallel_nan_cnn.GroupedLocalAutoencoders(kernel_size=kernel_size,stride=stride,padding=padding,n_filters=n_filters,classes=n_classes)
+    model = parallel_nan_cnn.GroupedLocalAutoencoders(kernel_size=kernel_size,
+                                                      stride=stride,
+                                                      padding=padding,
+                                                      n_filters=n_filters,
+                                                      classes=n_classes).to(device)
 
     
     #autoencoding loss is MSE of reconstruction vs input

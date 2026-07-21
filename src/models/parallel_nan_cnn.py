@@ -2,53 +2,6 @@ import torch
 import torch.nn as nn  # neural network modules
 import torch.nn.functional as F  # useful stateless functions
 
-"""defines each filter (kernel) with the function of encoding and decoding its input"""
-""" 
-class ConvFilter(nn.Module):
-    
-    def __init__(self, kernel_size=3,stride=1,padding=1):
-
-        super().__init__()
-
-        # encoder 
-        self.encoder = nn.Conv2d(
-            in_channels=1,
-            out_channels=1,
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=padding
-        )
-
-        # decoder, uses transpose convolution to restore input dimensions
-        self.decoder = nn.ConvTranspose2d(
-            in_channels=1,
-            out_channels=1,
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=padding
-        )
-
-        #standard activation within convolutional networks is relu
-        self.activation = nn.ReLU()
-
-    #encode input (used by individual filters)
-    def encode(self, x):
-
-        h = self.activation(self.encoder(x))
-
-        return h
-    
-    #calls encode and decode the latent feature representation (used by individual filters)
-    
-    def forward(self, x):
-
-        h = self.encode(x)
-
-        #experiment with different activation here
-        x_hat = torch.sigmoid(self.decoder(h))
-
-        return x_hat
-"""    
 
 class GroupedLocalAutoencoders(nn.Module):
     def __init__(self, kernel_size=3, stride=1, padding=1, n_filters=16, classes=10):
@@ -83,6 +36,20 @@ class GroupedLocalAutoencoders(nn.Module):
         #change to parameterise
         self.pool = nn.MaxPool2d(2, 2)
         self.fc = nn.Linear(n_filters * 14 * 14, classes)
+
+        
+        nn.init.uniform_(self.encoder.weight, -1.0, 1.0)
+        nn.init.uniform_(self.encoder.bias, -1.0, 1.0) 
+
+        nn.init.uniform_(self.decoder.weight, -1.0, 1.0)
+        nn.init.uniform_(self.decoder.bias, -1.0, 1.0)
+        
+        nn.init.uniform_(self.fc.weight, -1.0, 1.0)
+        nn.init.uniform_(self.fc.bias, -1.0, 1.0)
+
+
+
+
 
 
     def reconstruct_all(self, x):
