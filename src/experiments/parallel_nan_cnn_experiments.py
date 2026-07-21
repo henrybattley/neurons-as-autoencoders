@@ -151,7 +151,7 @@ def train_parallel_nan_cnn(  data,
 
         
         #for average autoencoder loss, divide by the batch size and then the n filters
-        avg_encoder_loss = (encoder_epoch_loss.item() / len(train_loader)) /n_filters
+        avg_encoder_loss = (encoder_epoch_loss.item() / len(train_loader))
 
         #for average classification loss, divide by the batch size and then form as percentage
         avg_classifier_loss = classifier_epoch_loss.item() / len(train_loader)
