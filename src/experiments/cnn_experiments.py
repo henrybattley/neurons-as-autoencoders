@@ -11,7 +11,6 @@ from src.optimizers import nan_cnn_local_gd
 
 import time
 
-torch.backends.cudnn.benchmark = True
 
 #Training pipeline, when hill_climb=True training follows that as defined by Bull 
 def train_cnn(  data, 
@@ -44,16 +43,27 @@ def train_cnn(  data,
     #seed randomness 
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)
 
-        
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    torch.use_deterministic_algorithms(True)
+
+    g = torch.Generator()
+    g.manual_seed(seed)
+
     #starting time from data loading
     start = time.perf_counter()
-    
+
     train_loader = torch.utils.data.DataLoader(
     data,
     batch_size=batch_size,
     shuffle=True,
+    generator=g,
     num_workers=0,  
     pin_memory=True,
     )

@@ -4,6 +4,10 @@ import torch.nn.functional as F  # useful stateless functions
 
 
 
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
+
 class CNN(nn.Module):
     def __init__(self,
                  input_dims,

@@ -8,8 +8,6 @@ from src.models import nan_cnn
 from src.models import weight_share_nan_cnn
 
 
-torch.backends.cudnn.benchmark = True
-
 
 def train_nan_cnn(  data, 
                     input_dims,
@@ -38,9 +36,19 @@ def train_nan_cnn(  data,
     #seed randomness 
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)
 
-        
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    torch.use_deterministic_algorithms(True)
+
+    g = torch.Generator()
+    g.manual_seed(seed)
+
     #starting time from data loading
     start = time.perf_counter()
 
@@ -48,6 +56,7 @@ def train_nan_cnn(  data,
     data,
     batch_size=batch_size,
     shuffle=True,
+    generator=g,
     num_workers=0,  
     pin_memory=True,
     )
@@ -205,9 +214,19 @@ def train_weight_share_nan_cnn(  data,
     #seed randomness 
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)
 
-        
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    torch.use_deterministic_algorithms(True)
+
+    g = torch.Generator()
+    g.manual_seed(seed)
+
     #starting time from data loading
     start = time.perf_counter()
 
@@ -215,6 +234,7 @@ def train_weight_share_nan_cnn(  data,
     data,
     batch_size=batch_size,
     shuffle=True,
+    generator=g,
     num_workers=0,  
     pin_memory=True,
     )
@@ -374,8 +394,18 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
     #seed randomness 
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)
 
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    torch.use_deterministic_algorithms(True)
+
+    g = torch.Generator()
+    g.manual_seed(seed)
 
     #starting time from data loading
     start = time.perf_counter()
@@ -384,6 +414,7 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
     data,
     batch_size=batch_size,
     shuffle=True,
+    generator=g,
     num_workers=0,  
     pin_memory=True,
     )
