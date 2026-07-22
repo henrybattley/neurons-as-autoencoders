@@ -5,6 +5,8 @@ import random
 import time
 
 from src.models import nan_cnn
+from src.models import weight_share_nan_cnn
+
 
 torch.backends.cudnn.benchmark = True
 
@@ -175,15 +177,19 @@ def train_nan_cnn(  data,
 
 
 
-
-
-#Training pipeline, when hill_climb=True training follows that as defined by Bull 
-def train_batched_nan_cnn(  data, 
-                n_epochs=100, 
-                batch_size=64,
-                learning_rate=0.001,
-                n_filters=16,
-                seed=42):
+def train_weight_share_nan_cnn(  data, 
+                    input_dims,
+                    n_epochs=100, 
+                    batch_size=64,
+                    learning_rate=0.001,
+                    n_filters=16,
+                    stride=1,
+                    padding=1,
+                    kernel_size=3,
+                    pool_kernel_size=2,
+                    pool_stride=2,
+                    n_classes=10,
+                    seed=42):
     
     training_history = {
     "encoder_train_loss": [],
@@ -192,7 +198,6 @@ def train_batched_nan_cnn(  data,
     }
     
 
-    #device = torch.device('cuda')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"device is: {device}")
 
@@ -200,53 +205,38 @@ def train_batched_nan_cnn(  data,
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
 
-    """ 
-    train_loader = torch.utils.data.DataLoader( data,
-                                                batch_size=batch_size,
-                                                shuffle=True
-                                                )"""
-    
-
-    
-    encoder_loader = torch.utils.data.DataLoader(
-        data,
-        batch_size=16,
-        shuffle=True,
-        num_workers=0,
-        pin_memory=True,
-    )
-
-    classifier_loader = torch.utils.data.DataLoader(
-        data,
-        batch_size=256,
-        shuffle=True,
-        num_workers=0,
-        pin_memory=True,
-    )
-    
- 
-    #starting time from model definition
+        
+    #starting time from data loading
     start = time.perf_counter()
 
-    model = nan_cnn.FilterCNN(
-        kernel_size=3,
-        stride=1,
-        padding=1,
-        n_filters=n_filters,
-        classes=10
+    train_loader = torch.utils.data.DataLoader(
+    data,
+    batch_size=batch_size,
+    shuffle=True,
+    num_workers=0,  
+    pin_memory=True,
     )
 
-
-    model.to(device)
-
+    #defining the FilterCNN model (network of filter autoencoders with classifier head)
+    model = weight_share_nan_cnn.FilterCNN(
+        input_dims=input_dims,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        n_filters=n_filters,
+        pool_kernel_size=pool_kernel_size,
+        pool_stride=pool_stride,
+        classes=n_classes
+    ).to(device)
     
 
-    encoder_criterion = torch.nn.MSELoss()
-    encoder_criterion.to(device)
+    #autoencoding loss is MSE of reconstruction vs input
+    encoder_criterion = torch.nn.MSELoss().to(device)
 
-    classifier_criterion = torch.nn.CrossEntropyLoss()
-    classifier_criterion.to(device)
-
+    #classifier loss is cross entropy
+    classifier_criterion = torch.nn.CrossEntropyLoss().to(device)
+  
+    # separate optimisers are stored per filter, where each filter's parameters span the encoding and decoding weights and biases
     filter_optimizers = [
         torch.optim.Adam(
             model.filters[j].parameters(),
@@ -255,9 +245,9 @@ def train_batched_nan_cnn(  data,
         for j in range(n_filters)
     ]
 
-
-    #only touch weights of the fully connected layer
+    #classifier optimiser only adjusts weights of the fully connected layer
     classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=learning_rate)
+
 
     for epoch in range(n_epochs):
 
@@ -267,18 +257,21 @@ def train_batched_nan_cnn(  data,
         correct = 0
         total = 0
 
-        for images, _ in encoder_loader:
+        #per batch
+        for images, labels in train_loader:
 
             images = images.to(device)
-            #labels = labels.to(device)
+            labels = labels.to(device)
 
+            # each filter encodes and decodes their input (would be performed in parallel on specialised hardware)
             for j in range(n_filters):
-
+                
+                #get the optimiser associeted with filter
                 optimizer = filter_optimizers[j]
 
                 optimizer.zero_grad()
 
-                x_hat = model.reconstruct_filter(images, j)
+                x_hat = model.reconstruct(images, j)
 
                 loss = encoder_criterion(x_hat, images)
 
@@ -287,14 +280,29 @@ def train_batched_nan_cnn(  data,
                 optimizer.step()
 
                 encoder_epoch_loss += loss.item()
-
-        for images, labels in classifier_loader:
             
+            #after filters have updated as per their gradient info, 
+            # perform individual forward passes through the filters, concatenate and extract resultant feature maps
+            #with torch.no_grad():   #be sure not to compute gradients of forward passes
+                #features = model.extract_features(images)
+
+            #features = features.detach() 
+
 
             classifier_optimizer.zero_grad()
 
-            logits = model(images)
+            #logits =model(images)
 
+            #logits = model.classify(features)
+
+            
+
+
+            with torch.no_grad():
+                features = model.extract_features(images)
+
+            logits = model.classify(features)
+            
             loss = classifier_criterion(logits, labels)
 
             loss.backward()
@@ -309,19 +317,15 @@ def train_batched_nan_cnn(  data,
             total += labels.size(0)
 
         
-
-        #divide by the batch size and then the n filters
+        #for average autoencoder loss, divide by the batch size and then the n filters
         avg_encoder_loss = encoder_epoch_loss / len(train_loader)
         avg_encoder_loss /= n_filters
 
-
-
+        #for average classification loss, divide by the batch size and then form as percentage
         avg_classifier_loss = classifier_epoch_loss / len(train_loader)
         classification_accuracy = 100.0 * correct / total
 
 
-    
-        #the average reconstruction loss per filter per minibatch.
         print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Training Loss: {avg_encoder_loss:.4f}")
 
         training_history["encoder_train_loss"].append(avg_encoder_loss)
@@ -336,6 +340,13 @@ def train_batched_nan_cnn(  data,
     elapsed = time.perf_counter() - start
 
     return model, training_history, elapsed
+
+
+
+
+
+
+
 
 
 """ training loop that trains filters by running entirely on train data before moving to the next filter then classifier, then repeat
