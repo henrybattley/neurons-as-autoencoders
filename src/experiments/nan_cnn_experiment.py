@@ -417,6 +417,8 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
     #initially setting best loss to be inf (used for early stopping logic)
     best_loss = float('inf')
 
+    epochs_no_improve = 0
+
     for epoch in range(n_epochs):
 
         encoder_epoch_loss =0.0
@@ -470,6 +472,11 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
 
     for epoch in range(n_epochs):
 
+        classifier_epoch_loss =0.0
+
+        correct = 0
+        total = 0
+
         for images, labels in train_loader:
 
             images = images.to(device)
@@ -479,10 +486,7 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
             with torch.no_grad():
                 features = model.extract_features(images)
 
-            classifier_epoch_loss =0.0
 
-            correct = 0
-            total = 0
 
 
             classifier_optimizer.zero_grad()
