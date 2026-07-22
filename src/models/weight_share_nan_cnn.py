@@ -16,7 +16,7 @@ class WeightShareConvFilter(nn.Module):
             kernel_size=kernel_size,
             stride=stride,
             padding=padding,
-            bias=True #this is default anyway
+            bias=False #this is default anyway
         )
 
         """ 
