@@ -422,7 +422,7 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
     #initially setting best loss to be inf (used for early stopping logic)
     best_loss = float('inf')
     epochs_no_improve = 0
-    min_delta = 1e-5
+    min_delta = 1e-4
 
 
     for epoch in range(n_epochs):
