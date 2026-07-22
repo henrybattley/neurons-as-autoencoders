@@ -41,9 +41,10 @@ def train_cnn(  data,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"device is: {device}")
 
-    #seed randomness (already performed in notebook but now training is self-contained)
+    #seed randomness 
+    random.seed(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
-    rng = np.random.default_rng(seed)
 
         
     #starting time from data loading
@@ -107,9 +108,10 @@ def train_deep_cnn(  data,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"device is: {device}")
 
-    #seed randomness (already performed in notebook but now training is self-contained)
+    #seed randomness 
+    random.seed(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
-    rng = np.random.default_rng(seed)
 
     
     train_loader = torch.utils.data.DataLoader(

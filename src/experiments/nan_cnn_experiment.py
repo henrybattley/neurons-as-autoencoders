@@ -35,9 +35,10 @@ def train_nan_cnn(  data,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"device is: {device}")
 
-    #seed randomness (already performed in notebook but now training is self-contained)
+    #seed randomness 
+    random.seed(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
-    rng = np.random.default_rng(seed)
 
         
     #starting time from data loading
@@ -201,9 +202,10 @@ def train_weight_share_nan_cnn(  data,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"device is: {device}")
 
-    #seed randomness (already performed in notebook but now training is self-contained)
+    #seed randomness 
+    random.seed(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
-    rng = np.random.default_rng(seed)
 
         
     #starting time from data loading
@@ -369,9 +371,11 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"device is: {device}")
 
-    #seed randomness (already performed in notebook but now training is self-contained)
+    #seed randomness 
+    random.seed(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
-    rng = np.random.default_rng(seed)
+
 
     #starting time from data loading
     start = time.perf_counter()
@@ -458,7 +462,6 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
         training_history["encoder_train_loss"].append(avg_encoder_loss)
 
         #early stop when we have no loss improvement for three consecutive epochs
-        #if avg_encoder_loss < best_loss:
 
         if avg_encoder_loss < best_loss - min_delta:
                 best_loss = avg_encoder_loss
@@ -467,14 +470,12 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
         else:
                 epochs_no_improve += 1
 
-        if epochs_no_improve >= patience:
-                print(f"Early stopping triggered at epoch {epoch+1}... Now training classifier")
-                training_history["epoch_converged"].append(best_epoch)
-                break #stop training epochs
+                if epochs_no_improve >= patience:
+                        print(f"Early stopping triggered at epoch {epoch+1}... Now training classifier")
+                        training_history["epoch_converged"].append(best_epoch)
+                        break #stop training epochs
 
     #now train classifier
-
-
 
     for epoch in range(n_epochs):
 
