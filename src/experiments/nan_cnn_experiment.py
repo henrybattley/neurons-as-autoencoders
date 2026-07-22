@@ -362,7 +362,8 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
     training_history = {
     "encoder_train_loss": [],
     "task_train_loss": [],
-    "train_accuracy": []
+    "train_accuracy": [],
+    "epoch_converged": []
     }
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -464,6 +465,7 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
 
         if epochs_no_improve >= patience:
                 print(f"Early stopping triggered at epoch {epoch+1}... Now training classifier")
+                training_history["epoch_converged"].append(epoch-2)
                 break #stop training epochs
 
     #now train classifier
