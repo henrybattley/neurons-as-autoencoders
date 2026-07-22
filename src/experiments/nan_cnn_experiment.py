@@ -417,8 +417,9 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
 
     #initially setting best loss to be inf (used for early stopping logic)
     best_loss = float('inf')
-
     epochs_no_improve = 0
+    min_delta = 1e-4
+
 
     for epoch in range(n_epochs):
 
@@ -457,15 +458,18 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
         training_history["encoder_train_loss"].append(avg_encoder_loss)
 
         #early stop when we have no loss improvement for three consecutive epochs
-        if avg_encoder_loss < best_loss:
+        #if avg_encoder_loss < best_loss:
+
+        if avg_encoder_loss < best_loss - min_delta:
                 best_loss = avg_encoder_loss
+                best_epoch = epoch + 1
                 epochs_no_improve = 0
         else:
                 epochs_no_improve += 1
 
         if epochs_no_improve >= patience:
                 print(f"Early stopping triggered at epoch {epoch+1}... Now training classifier")
-                training_history["epoch_converged"].append(epoch-2)
+                training_history["epoch_converged"].append(best_epoch)
                 break #stop training epochs
 
     #now train classifier
