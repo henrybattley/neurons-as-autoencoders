@@ -29,7 +29,7 @@ class WeightShareConvFilter(nn.Module):
             padding=padding
         )"""
 
-        self.decoder_bias = nn.Parameter(torch.zeros(1))
+        #self.decoder_bias = nn.Parameter(torch.zeros(1))
 
         self.stride = stride
         self.padding = padding
@@ -54,7 +54,7 @@ class WeightShareConvFilter(nn.Module):
         x_hat = F.conv_transpose2d(
         h,
         weight=self.encoder.weight,
-        bias=self.decoder_bias,
+        bias=None,
         stride=self.stride,
         padding=self.padding,
     )
