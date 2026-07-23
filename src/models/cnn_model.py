@@ -28,9 +28,7 @@ class CNN(nn.Module):
         self.pool_kernel_size=pool_kernel_size
         self.pool_stride = pool_stride
 
-        #xavier init for fc
-        nn.init.xavier_normal_(self.fc.weight)
-        nn.init.zeros_(self.fc.bias)
+
         
         # 1st conv block (creates n_filters feature mappings)
         self.conv1 = nn.Conv2d(in_channels=1, 
@@ -51,6 +49,10 @@ class CNN(nn.Module):
         pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1        
 
         self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
+
+        #xavier init for fc
+        nn.init.xavier_normal_(self.fc.weight)
+        nn.init.zeros_(self.fc.bias)
 
 
     def forward(self, x):
