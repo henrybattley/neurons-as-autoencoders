@@ -79,7 +79,7 @@ class FilterCNN(nn.Module):
         self.pool_stride = pool_stride
         
         #define the list of autoencoder filter submodules 
-        self.filters = nn.ModuleList([WeightShareConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
+        self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
 
 
         self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
