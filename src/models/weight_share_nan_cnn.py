@@ -16,19 +16,17 @@ class WeightShareConvFilter(nn.Module):
             kernel_size=kernel_size,
             stride=stride,
             padding=padding,
-            bias=True #this is default anyway
         )
 
-        """ 
-        # decoder, uses transpose convolution to restore input dimensions
-        self.decoder = nn.ConvTranspose2d(
-            in_channels=1,
-            out_channels=1,
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=padding
-        )"""
+        #encoder He initialiasion for pre relu gates 
+        nn.init.kaiming_normal_(
+                                self.encoder.weight,
+                                mode="fan_out",
+                                nonlinearity="relu"
+        )
+        nn.init.zeros_(self.encoder.bias)
 
+        #decoder weights reuse the encoder's, however decoder has a bias term
         self.decoder_bias = nn.Parameter(torch.zeros(1))
 
         self.stride = stride
@@ -45,7 +43,6 @@ class WeightShareConvFilter(nn.Module):
         return h
     
     #calls encode and decode the latent feature representation (used by individual filters)
-    
     def forward(self, x):
 
         h = self.encode(x)
@@ -61,11 +58,6 @@ class WeightShareConvFilter(nn.Module):
 
         return torch.sigmoid(x_hat)
 
-        """ 
-        #experiment with different activation here
-        x_hat = torch.sigmoid(self.decoder(h))
-
-        return x_hat"""
     
     
 """defines the network of ConvFilters"""
@@ -97,7 +89,6 @@ class FilterCNN(nn.Module):
         #define the list of autoencoder filter submodules 
         self.filters = nn.ModuleList([WeightShareConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
 
-
         self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 
         #only works with square input..
@@ -106,9 +97,11 @@ class FilterCNN(nn.Module):
         pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1                
 
 
-        #the classifier output how do we parametize these dimensions to change with input params
-        #self.fc = nn.Linear(n_filters * 14 * 14, classes)
         self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
+        
+        #xavier init for linear fully connected
+        nn.init.xavier_normal_(self.fc.weight)
+        nn.init.zeros_(self.fc.bias)
 
     
 

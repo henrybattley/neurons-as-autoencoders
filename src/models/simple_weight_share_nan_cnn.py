@@ -19,6 +19,13 @@ class SimpleWeightShareConvFilter(nn.Module):
             bias=False #no encoder bias
         )
 
+        #encoder He initialiasion for pre relu gates 
+        nn.init.kaiming_normal_(
+                                self.encoder.weight,
+                                mode="fan_out",
+                                nonlinearity="relu"
+        )
+
         self.stride = stride
         self.padding = padding
 
@@ -81,7 +88,6 @@ class FilterCNN(nn.Module):
         #define the list of autoencoder filter submodules 
         self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
 
-
         self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 
         #only works with square input..
@@ -89,20 +95,18 @@ class FilterCNN(nn.Module):
 
         pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1                
 
-
-        #the classifier output how do we parametize these dimensions to change with input params
-        #self.fc = nn.Linear(n_filters * 14 * 14, classes)
         self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
 
-    
+        #xavier init for linear fully connected
+        nn.init.xavier_normal_(self.fc.weight)
+        nn.init.zeros_(self.fc.bias)
+
 
     # local reconstruction of one filter
-
     def reconstruct(self, x, filter_idx):
 
-        #we are now referring to the individual model forward which does the reconstruction
+        #refers to the individual model forward function which does the reconstruction
         return self.filters[filter_idx](x)
-    
     
     
     def extract_features(self, x):

@@ -18,6 +18,14 @@ class ConvFilter(nn.Module):
             padding=padding
         )
 
+        #encoder He initialiasion for pre relu gates 
+        nn.init.kaiming_normal_(
+                                self.encoder.weight,
+                                mode="fan_out",
+                                nonlinearity="relu"
+        )
+        nn.init.zeros_(self.encoder.bias)
+
         # decoder, uses transpose convolution to restore input dimensions
         self.decoder = nn.ConvTranspose2d(
             in_channels=1,
@@ -27,23 +35,13 @@ class ConvFilter(nn.Module):
             padding=padding
         )
 
-        #He initialiasion for relu gates 
-        nn.init.kaiming_normal_(
-                                self.encoder.weight,
-                                mode="fan_out",
-                                nonlinearity="relu"
-        )
-
-        #xavier is meant for symmetric activations (like sigmoid)
+        #xavier is useful for symmetric activations (like sigmoid)
         nn.init.xavier_normal_(self.decoder.weight)
-
-        
-        nn.init.zeros_(self.encoder.bias)
         nn.init.zeros_(self.decoder.bias)
-
 
         #modern standard activation within convolutional networks is relu
         self.activation = nn.ReLU()
+
 
     #encode input (used by individual filters)
     def encode(self, x):
@@ -53,12 +51,11 @@ class ConvFilter(nn.Module):
         return h
     
     #calls encode and decode the latent feature representation (used by individual filters)
-    
     def forward(self, x):
 
         h = self.encode(x)
 
-        #experiment with different activation here
+        #experiment with different activation here-- perhaps no sigmoid
         x_hat = torch.sigmoid(self.decoder(h))
 
         return x_hat
@@ -93,7 +90,6 @@ class FilterCNN(nn.Module):
         #define the list of autoencoder filter submodules 
         self.filters = nn.ModuleList([ConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
 
-
         self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 
         #only works with square input..
@@ -101,11 +97,7 @@ class FilterCNN(nn.Module):
 
         pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1                
 
-
-        #the classifier output how do we parametize these dimensions to change with input params
-        #self.fc = nn.Linear(n_filters * 14 * 14, classes)
         self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
-
 
         #xavier init for linear fully connected
         nn.init.xavier_normal_(self.fc.weight)
@@ -116,7 +108,7 @@ class FilterCNN(nn.Module):
 
     def reconstruct(self, x, filter_idx):
 
-        #we are now referring to the individual model forward which does the reconstruction
+        #refers to the individual model forward function which does the encoding and reconstruction
         return self.filters[filter_idx](x)
     
     

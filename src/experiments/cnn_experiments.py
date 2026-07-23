@@ -22,6 +22,7 @@ def train_cnn(  data,
                 pool_kernel_size=2,
                 pool_stride=2,
                 n_classes=10,
+                bias=True,
                 seed=42):
     
 
@@ -72,7 +73,8 @@ def train_cnn(  data,
         n_filters=n_filters,
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
-        classes=n_classes
+        classes=n_classes,
+        bias=bias
     ).to(device)
 
     criterion = torch.nn.CrossEntropyLoss()

@@ -15,7 +15,8 @@ class CNN(nn.Module):
                  n_filters, 
                  classes,
                  pool_kernel_size,
-                 pool_stride 
+                 pool_stride,
+                 bias=True 
     ):
         super(CNN, self).__init__()
 
@@ -35,11 +36,14 @@ class CNN(nn.Module):
                                out_channels=n_filters,
                                kernel_size=kernel_size,
                                stride=stride, 
-                               padding=padding)
+                               padding=padding,
+                               bias=bias)
         
         #He initialisation pre relu activation
         nn.init.kaiming_normal_(self.conv1.weight)
-        nn.init.zeros_(self.conv1.bias)
+        
+        if bias == True:
+            nn.init.zeros_(self.conv1.bias)
 
 
         self.pool = nn.MaxPool2d(kernel_size=pool_kernel_size, stride=pool_stride) 
