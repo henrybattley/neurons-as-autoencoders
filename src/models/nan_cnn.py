@@ -27,7 +27,22 @@ class ConvFilter(nn.Module):
             padding=padding
         )
 
-        #standard activation within convolutional networks is relu
+        #He initialiasion for relu gates 
+        nn.init.kaiming_normal_(
+                                self.encoder.weight,
+                                mode="fan_out",
+                                nonlinearity="relu"
+        )
+
+        #xavier is meant for symmetric activations (like sigmoid)
+        nn.init.xavier_normal_(self.decoder.weight)
+
+        
+        nn.init.zeros_(self.encoder.bias)
+        nn.init.zeros_(self.decoder.bias)
+
+
+        #modern standard activation within convolutional networks is relu
         self.activation = nn.ReLU()
 
     #encode input (used by individual filters)
@@ -91,7 +106,11 @@ class FilterCNN(nn.Module):
         #self.fc = nn.Linear(n_filters * 14 * 14, classes)
         self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
 
-    
+
+        #xavier init for linear fully connected
+        nn.init.xavier_normal_(self.fc.weight)
+        nn.init.zeros_(self.fc.bias)
+
 
     # local reconstruction of one filter
 

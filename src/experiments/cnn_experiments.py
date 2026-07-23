@@ -4,15 +4,12 @@ import torch, torchvision
 import random
 
 from src.models import cnn_model
-from src.models import nan_cnn
 
 from src.optimizers import global_backprop
-from src.optimizers import nan_cnn_local_gd
 
 import time
 
 
-#Training pipeline, when hill_climb=True training follows that as defined by Bull 
 def train_cnn(  data, 
                 input_dims,
                 n_epochs=100, 
@@ -28,7 +25,6 @@ def train_cnn(  data,
                 seed=42):
     
 
-    
     training_history = {
     "train_loss": [],
     "train_accuracy":[],
@@ -36,7 +32,6 @@ def train_cnn(  data,
     }
     
 
-    #device = torch.device('cuda')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"device is: {device}")
 
@@ -84,8 +79,7 @@ def train_cnn(  data,
     criterion.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    # Training loop
-
+    # Training loop..
     for epoch in range(n_epochs):
             
         train_loss,accuracy = global_backprop.train(model, train_loader, criterion, optimizer, device)
@@ -101,6 +95,8 @@ def train_cnn(  data,
 
 
 
+
+""" deeper model to come back to 
 def train_deep_cnn(  data, 
                 n_epochs=100, 
                 batch_size=64,
@@ -167,6 +163,6 @@ def train_deep_cnn(  data,
 
     elapsed = time.perf_counter() - start
     return model, training_history,elapsed
-
+"""
 
 
