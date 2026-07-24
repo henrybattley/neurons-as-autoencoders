@@ -782,6 +782,7 @@ def train_linear_schedule_no_pool_simple_weight_share_nan_cnn(  data,
                     pool_stride=2,
                     output_padding=0,
                     n_classes=10,
+                    bias=False,
                     seed=42,
                     patience=3):
     
@@ -833,6 +834,7 @@ def train_linear_schedule_no_pool_simple_weight_share_nan_cnn(  data,
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
         output_padding=output_padding,
+        bias=bias,
         classes=n_classes
     ).to(device)
     

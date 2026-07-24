@@ -5,7 +5,7 @@ import torch.nn.functional as F  # useful stateless functions
 """defines each filter (kernel) with the function of encoding and decoding its input"""
 class SimpleWeightShareConvFilter(nn.Module):
     
-    def __init__(self, kernel_size=3,stride=1,padding=1,output_padding=0):
+    def __init__(self, kernel_size=3,stride=1,padding=1,output_padding=0,bias=False):
 
         super().__init__()
 
@@ -16,7 +16,7 @@ class SimpleWeightShareConvFilter(nn.Module):
             kernel_size=kernel_size,
             stride=stride,
             padding=padding,
-            bias=False #no encoder bias
+            bias=bias #False by default
         )
 
         #encoder He initialiasion for pre relu gates 
@@ -25,6 +25,14 @@ class SimpleWeightShareConvFilter(nn.Module):
                                 mode="fan_out",
                                 nonlinearity="relu"
         )
+
+        if bias==True:
+
+            nn.init.zeros_(self.encoder.bias)
+            #decoder weights reuse the encoder's, however decoder has a bias term
+            self.decoder_bias = nn.Parameter(torch.zeros(1))
+        else:
+            self.decoder_bias=None
 
         self.stride = stride
         self.padding = padding
@@ -51,7 +59,7 @@ class SimpleWeightShareConvFilter(nn.Module):
         x_hat = F.conv_transpose2d(
         h,
         weight=self.encoder.weight,
-        bias=None,
+        bias=self.decoder_bias,
         stride=self.stride,
         padding=self.padding,
         output_padding=self.output_padding
@@ -75,7 +83,8 @@ class FilterCNN(nn.Module):
             classes:int, 
             pool_kernel_size:int, 
             pool_stride:int,
-            output_padding:int
+            output_padding:int,
+            bias:bool
         ):
         
         super().__init__()
@@ -89,9 +98,10 @@ class FilterCNN(nn.Module):
         self.pool_kernel_size=pool_kernel_size
         self.pool_stride = pool_stride
         self.output_padding =output_padding
+        self.bias =bias
         
         #define the list of autoencoder filter submodules 
-        self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size=kernel_size,stride=stride,padding=padding,output_padding=output_padding)for _ in range(n_filters)])
+        self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size=kernel_size,stride=stride,padding=padding,output_padding=output_padding,bias=bias)for _ in range(n_filters)])
 
         #self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 
