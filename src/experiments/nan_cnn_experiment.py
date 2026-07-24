@@ -579,6 +579,7 @@ def train_linear_schedule_simple_weight_share_nan_cnn(  data,
                     kernel_size=3,
                     pool_kernel_size=2,
                     pool_stride=2,
+                    output_padding=0,
                     n_classes=10,
                     seed=42,
                     patience=3):
@@ -630,6 +631,7 @@ def train_linear_schedule_simple_weight_share_nan_cnn(  data,
         n_filters=n_filters,
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
+        output_padding=output_padding,
         classes=n_classes
     ).to(device)
     
