@@ -91,14 +91,14 @@ class FilterCNN(nn.Module):
         #define the list of autoencoder filter submodules 
         self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
 
-        self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
+        #self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 
         #only works with square input..
         conv_dim = ((input_dims + 2*padding - kernel_size) // stride) + 1             
 
-        pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1                
+        #pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1                
 
-        self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
+        self.fc = nn.Linear(n_filters * conv_dim * conv_dim, classes)
 
         #xavier init for linear fully connected
         nn.init.xavier_normal_(self.fc.weight)
@@ -116,7 +116,7 @@ class FilterCNN(nn.Module):
 
         feature_maps = [f.encode(x) for f in self.filters]
         features = torch.cat(feature_maps, dim=1)
-        features = self.pool(features)
+        #features = self.pool(features)
         features = features.flatten(1)
         return features
     
