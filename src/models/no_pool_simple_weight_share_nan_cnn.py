@@ -74,8 +74,7 @@ class FilterCNN(nn.Module):
             n_filters:int,
             classes:int, 
             pool_kernel_size:int, 
-            pool_stride:int,
-            output_padding:int
+            pool_stride:int
         ):
         
         super().__init__()
@@ -88,7 +87,6 @@ class FilterCNN(nn.Module):
         self.classes = classes
         self.pool_kernel_size=pool_kernel_size
         self.pool_stride = pool_stride
-        self.output_padding =output_padding
         
         #define the list of autoencoder filter submodules 
         self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
