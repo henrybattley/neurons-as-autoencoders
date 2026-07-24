@@ -7,6 +7,7 @@ import time
 from src.models import nan_cnn
 from src.models import weight_share_nan_cnn
 from src.models import simple_weight_share_nan_cnn
+from src.models import no_pool_simple_weight_share_nan_cnn
 
 
 
@@ -823,7 +824,7 @@ def train_linear_schedule_no_pool_simple_weight_share_nan_cnn(  data,
     )
 
     #defining the FilterCNN model (network of filter autoencoders with classifier head)
-    model = simple_weight_share_nan_cnn.FilterCNN(
+    model = no_pool_simple_weight_share_nan_cnn.FilterCNN(
         input_dims=input_dims,
         kernel_size=kernel_size,
         stride=stride,
