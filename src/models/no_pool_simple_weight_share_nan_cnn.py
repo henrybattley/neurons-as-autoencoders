@@ -16,7 +16,7 @@ class SimpleWeightShareConvFilter(nn.Module):
             kernel_size=kernel_size,
             stride=stride,
             padding=padding,
-            bias=bias #False by default
+            bias=bias, #False by default
         )
 
         #encoder He initialiasion for pre relu gates 
@@ -37,6 +37,7 @@ class SimpleWeightShareConvFilter(nn.Module):
         self.stride = stride
         self.padding = padding
         self.output_padding = output_padding
+        self.sigmoid=sigmoid
 
 
         #modern standard activation within convolutional networks is relu
