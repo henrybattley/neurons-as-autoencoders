@@ -67,8 +67,7 @@ class SimpleWeightShareConvFilter(nn.Module):
     )
 
         #maybe we don't even sigmoid here? to simplify
-
-        if sigmoid ==False:
+        if not self.sigmoid:
             return x_hat
 
         return torch.sigmoid(x_hat)
