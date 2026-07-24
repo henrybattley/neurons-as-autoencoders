@@ -5,7 +5,7 @@ import torch.nn.functional as F  # useful stateless functions
 """defines each filter (kernel) with the function of encoding and decoding its input"""
 class SimpleWeightShareConvFilter(nn.Module):
     
-    def __init__(self, kernel_size=3,stride=1,padding=1,output_padding=0,bias=False):
+    def __init__(self, kernel_size=3,stride=1,padding=1,output_padding=0,bias=False,sigmoid=True):
 
         super().__init__()
 
@@ -66,6 +66,10 @@ class SimpleWeightShareConvFilter(nn.Module):
     )
 
         #maybe we don't even sigmoid here? to simplify
+
+        if sigmoid ==False:
+            return x_hat
+
         return torch.sigmoid(x_hat)
 
 
@@ -84,7 +88,8 @@ class FilterCNN(nn.Module):
             pool_kernel_size:int, 
             pool_stride:int,
             output_padding:int,
-            bias:bool
+            bias:bool,
+            sigmoid:bool
         ):
         
         super().__init__()
@@ -99,9 +104,10 @@ class FilterCNN(nn.Module):
         self.pool_stride = pool_stride
         self.output_padding =output_padding
         self.bias =bias
+        self.sigmoid=sigmoid
         
         #define the list of autoencoder filter submodules 
-        self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size=kernel_size,stride=stride,padding=padding,output_padding=output_padding,bias=bias)for _ in range(n_filters)])
+        self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size=kernel_size,stride=stride,padding=padding,output_padding=output_padding,bias=bias,sigmoid=sigmoid)for _ in range(n_filters)])
 
         #self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 
