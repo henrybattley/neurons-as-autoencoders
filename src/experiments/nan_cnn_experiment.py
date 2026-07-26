@@ -1191,6 +1191,7 @@ def train_input_corruption_nan_cnn(  data,
                     n_classes=10,
                     bias=False,
                     sigmoid=True,
+                    sigma =0.1,
                     seed=42,
                     patience=3):
     
@@ -1282,7 +1283,7 @@ def train_input_corruption_nan_cnn(  data,
             images = images.to(device)
 
             # per batch, corrupt the input
-            noise = 0.1 * torch.randn_like(images)
+            noise = sigma * torch.randn_like(images)
             corrupted = torch.clamp(images + noise, 0.0, 1.0)
             
             # each filter encodes and decodes their input (would be performed in parallel on specialised hardware)
