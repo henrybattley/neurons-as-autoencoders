@@ -2138,7 +2138,7 @@ def train_rotating_input_nan_cnn(  data,
             images = images.to(device)
 
             #with 0.5 prob do the small rotation
-            if torch.rand(1).item() < 0.5:
+            if torch.rand((), device=device) < 0.5:
 
                 angles = torch.empty(images.size(0),device=device).uniform_(-degree, degree)
 
