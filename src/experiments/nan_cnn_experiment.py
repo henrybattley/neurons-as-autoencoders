@@ -991,6 +991,7 @@ def train_linear_schedule_simple_weight_share_nan_cnn(  data,
                     pool_stride=2,
                     output_padding=0,
                     n_classes=10,
+                    weight_decay=1e-2,
                     seed=42,
                     patience=3):
     
@@ -1056,13 +1057,14 @@ def train_linear_schedule_simple_weight_share_nan_cnn(  data,
     filter_optimizers = [
         torch.optim.Adam(
             model.filters[j].parameters(),
-            lr=learning_rate
+            lr=learning_rate,
+            weight_decay=weight_decay,
         )
         for j in range(n_filters)
     ]
 
     #classifier optimiser only adjusts weights of the fully connected layer
-    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=learning_rate)
+    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=learning_rate,weight_decay=weight_decay)
 
     #initially setting best loss to be inf (used for early stopping logic)
     best_loss = float('inf')
