@@ -38,6 +38,7 @@ class SimpleWeightShareConvFilter(nn.Module):
         self.padding = padding
         self.output_padding = output_padding
         self.sigmoid=sigmoid
+        self.latent_sigma = latent_sigma
 
 
         #modern standard activation within convolutional networks is relu
