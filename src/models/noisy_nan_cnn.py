@@ -54,7 +54,7 @@ class SimpleWeightShareConvFilter(nn.Module):
 
 
     #encode input (used by individual filters)
-    def noisy_encode(self, x, latent_sigma):
+    def noisy_encode(self, x):
 
 
         h = self.activation(self.encoder(x))
@@ -73,7 +73,7 @@ class SimpleWeightShareConvFilter(nn.Module):
     
     def forward(self, x):
 
-        h = self.encode(x)
+        h = self.noisy_encode(x)
 
         # do the transpose convolution but using the encoder weights
         x_hat = F.conv_transpose2d(
