@@ -60,7 +60,7 @@ class SimpleWeightShareConvFilter(nn.Module):
         h = self.activation(self.encoder(x))
 
         if self.training and self.latent_sigma > 0:
-            print("performing latent noise addition..")
+     
             noise = self.latent_sigma * torch.randn_like(h)
             h = h + noise
 
