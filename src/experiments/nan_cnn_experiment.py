@@ -1280,6 +1280,10 @@ def train_input_corruption_nan_cnn(  data,
         for images, _ in train_loader:
 
             images = images.to(device)
+
+            # per batch, corrupt the input
+            noise = 0.1 * torch.randn_like(images)
+            corrupted = torch.clamp(images + noise, 0.0, 1.0)
             
             # each filter encodes and decodes their input (would be performed in parallel on specialised hardware)
             for j in range(n_filters):
@@ -1289,10 +1293,6 @@ def train_input_corruption_nan_cnn(  data,
 
                 optimizer.zero_grad()
 
-
-                noise = 0.1 * torch.randn_like(images)
-
-                corrupted = images + noise
 
                 x_hat = model.reconstruct(corrupted,j)
 
@@ -1347,9 +1347,6 @@ def train_input_corruption_nan_cnn(  data,
             #extract features for the batch
             with torch.no_grad():
                 features = model.extract_features(images)
-
-
-
 
             classifier_optimizer.zero_grad()
 
