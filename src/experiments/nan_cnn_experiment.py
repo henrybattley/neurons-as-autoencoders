@@ -1934,13 +1934,17 @@ def train_sparse_nan_cnn(  data,
 
                 x_hat,sparsity_loss = model.reconstruct(images, j)
 
-                loss = sparsity_loss + encoder_criterion(x_hat, images)
+                criterion_loss =  encoder_criterion(x_hat, images)
+
+                #minimise the sparsity loss term with the criterion loss
+                loss = sparsity_loss + criterion_loss
 
                 loss.backward()
 
                 optimizer.step()
 
-                encoder_epoch_loss += loss.item()
+                #just inspect criterion loss
+                encoder_epoch_loss += criterion_loss.item()
             
 
         #for average autoencoder loss, divide by the batch size and then the n filters
