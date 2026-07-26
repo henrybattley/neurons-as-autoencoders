@@ -5,7 +5,7 @@ import torch.nn.functional as F  # useful stateless functions
 """defines each filter (kernel) with the function of encoding and decoding its input"""
 class SimpleWeightShareConvFilter(nn.Module):
     
-    def __init__(self, kernel_size=3,stride=1,padding=1,output_padding=0,bias=False,sigmoid=True,lambda_sparse=0.2):
+    def __init__(self, kernel_size=3,stride=1,padding=1,output_padding=0,bias=False,sigmoid=True,lambda_sparse=1e-5):
 
         super().__init__()
 

@@ -1832,7 +1832,7 @@ def train_sparse_nan_cnn(  data,
                     sigmoid=True,
                     weight_decay=1e-2, 
                     seed=42,
-                    lambda_sparse=0.2,
+                    lambda_sparse=1e-5,
                     patience=3):
     
     training_history = {
