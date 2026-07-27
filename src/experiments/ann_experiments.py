@@ -12,13 +12,9 @@ from src.optimizers import ann_hillclimb
 
 #training pipeline with default parameters
 def train_ANN(  NK_data_train, 
-                #NK_data_test,
                 n_epochs=100, 
                 batch_size=64,
                 learning_rate=0.001,
-                USE_GPU=False,
-                fold_id=None,
-                metrics_dict=None,
                 hill_climb=True,
                 seed=42):
     
@@ -29,10 +25,9 @@ def train_ANN(  NK_data_train,
     }
     
 
-    #student's gpu is non-CUDA enabled
-    device = torch.device('cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    #seed randomness (already performed in notebook but now training is self-contained)
+    #seed randomness 
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
 

@@ -6,7 +6,6 @@ import random
 
 from src.models.NAN import NAN
 from src.models.local_gd_nan import NAN_GD
-from src.datasets.NK import NKLandscape
 from src.optimizers import global_backprop
 from src.optimizers import nan_hillclimb
 from src.optimizers import nan_gradient_descent
@@ -28,8 +27,7 @@ def train_NAN(  data,
     }
     
 
-    #student's gpu is non-CUDA enabled
-    device = torch.device('cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     #seed randomness (already performed in notebook but now training is self-contained)
     torch.manual_seed(seed)
@@ -84,7 +82,7 @@ def train_NAN(  data,
                     x_hat = model.reconstruct_single(inputs, neuron)
 
                     #accumulate the loss
-                    #neuron_loss += criterion(x_hat, target_inputs).item()
+
                     neuron_loss += criterion(x_hat*2-1, inputs).item()
                         
 

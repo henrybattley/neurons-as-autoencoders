@@ -22,7 +22,10 @@ def train_nan_cnn(  data,
                     input_dims,
                     n_epochs=100, 
                     batch_size=64,
-                    learning_rate=0.001,
+                    #learning_rate=0.001, 
+                    classifier_lr=0.0001,
+                    au_lr=0.001,
+
                     n_filters=16,
                     stride=1,
                     padding=1,
@@ -93,13 +96,13 @@ def train_nan_cnn(  data,
     filter_optimizers = [
         torch.optim.Adam(
             model.filters[j].parameters(),
-            lr=learning_rate
+            lr=au_lr
         )
         for j in range(n_filters)
     ]
 
     #classifier optimiser only adjusts weights of the fully connected layer
-    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=learning_rate)
+    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=classifier_lr)
 
 
     for epoch in range(n_epochs):
