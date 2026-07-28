@@ -62,18 +62,6 @@ def train_parallel_nan_cnn(  data,
     pin_memory=True,
     )
 
-    #defining the FilterCNN model (network of filter autoencoders with classifier head)
-    """ 
-    model = parallel_nan_cnn.GroupedLocalAutoencoders(
-        input_dims=input_dims,
-        kernel_size=kernel_size,
-        stride=stride,
-        padding=padding,
-        n_filters=n_filters,
-        pool_kernel_size=pool_kernel_size,
-        pool_stride=pool_stride,
-        classes=n_classes
-    ).to(device)"""
 
     model = parallel_nan_cnn.GroupedLocalAutoencoders(kernel_size=kernel_size,
                                                       stride=stride,
@@ -88,15 +76,6 @@ def train_parallel_nan_cnn(  data,
     #classifier loss is cross entropy
     classifier_criterion = torch.nn.CrossEntropyLoss().to(device)
   
-    # separate optimisers are stored per filter, where each filter's parameters span the encoding and decoding weights and biases
-    """ 
-    filter_optimizers = [
-        torch.optim.Adam(
-            model.filters[j].parameters(),
-            lr=learning_rate
-        )
-        for j in range(n_filters)
-    ]"""
 
     # 1. Autoencoder optimizer updates grouped encoder and decoder weights simultaneously
     autoencoder_optimizer = torch.optim.Adam(
@@ -130,7 +109,9 @@ def train_parallel_nan_cnn(  data,
             x_hat, x_expanded, _ = model.reconstruct_all(images)
 
             # Compute parallel MSE loss across all N isolated filter maps
-            ae_loss = encoder_criterion(x_hat, x_expanded)
+            #ae_loss = encoder_criterion(x_hat, x_expanded)
+            ae_loss = encoder_criterion(x_hat, x_expanded)*n_filters
+
 
             #backward pass is split into n_filters independent gradient calculations
             ae_loss.backward()
