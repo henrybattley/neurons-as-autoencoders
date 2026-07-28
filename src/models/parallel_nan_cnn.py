@@ -20,13 +20,20 @@ class GroupedLocalAutoencoders(nn.Module):
             groups=n_filters  # Fully isolates each encoder filter!
         )
 
+        """ 
         #encoder He initialiasion for pre relu gates 
         nn.init.kaiming_normal_(
                                 self.encoder.weight,
                                 mode="fan_out",
                                 nonlinearity="relu"
         )
-        nn.init.zeros_(self.encoder.bias)
+        nn.init.zeros_(self.encoder.bias)"""
+        with torch.no_grad():
+            # Calculate std for a single filter (out_channels=1 per group)
+            fan_out = 1 * kernel_size * kernel_size  # 1 * 3 * 3 = 9
+            std = (2.0 / fan_out) ** 0.5
+            self.encoder.weight.normal_(0, std)
+            nn.init.zeros_(self.encoder.bias)
 
         # Grouped Decoder: In=N, Out=N, Groups=N
         # Means: Feature Map 0 ONLY goes to Decoder 0, etc.
@@ -38,9 +45,24 @@ class GroupedLocalAutoencoders(nn.Module):
             padding=padding,
             groups=n_filters  # Fully isolates each decoder filter!
         )
-                #xavier is useful for symmetric activations (like sigmoid)
+
+        
+        with torch.no_grad():
+            # Single filter fan_in and fan_out are both 1 * K * K = 9
+            fan_in = 1 * kernel_size * kernel_size
+            fan_out = 1 * kernel_size * kernel_size
+            
+            # Xavier normal std = gain * sqrt(2 / (fan_in + fan_out))
+            # gain for Sigmoid / default is 1.0
+            std_decoder = (2.0 / (fan_in + fan_out)) ** 0.5
+            
+            self.decoder.weight.normal_(0, std_decoder)
+            nn.init.zeros_(self.decoder.bias)
+
+        """ 
+        #xavier is useful for symmetric activations (like sigmoid)
         nn.init.xavier_normal_(self.decoder.weight)
-        nn.init.zeros_(self.decoder.bias)
+        nn.init.zeros_(self.decoder.bias)"""
 
         self.activation = nn.ReLU()
 
@@ -48,6 +70,7 @@ class GroupedLocalAutoencoders(nn.Module):
         self.pool = nn.MaxPool2d(2, 2)
         self.fc = nn.Linear(n_filters * 14 * 14, classes)
 
+ 
         #xavier init for linear fully connected
         nn.init.xavier_normal_(self.fc.weight)
         nn.init.zeros_(self.fc.bias)
