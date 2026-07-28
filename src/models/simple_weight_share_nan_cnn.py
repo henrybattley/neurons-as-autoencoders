@@ -19,17 +19,17 @@ class SimpleWeightShareConvFilter(nn.Module):
             bias=False #no encoder bias
         )
 
-        """ 
+        
         #encoder He initialiasion for pre relu gates 
         nn.init.kaiming_normal_(
                                 self.encoder.weight,
                                 mode="fan_out",
                                 nonlinearity="relu"
-        )"""
+        )
 
-
+        """ 
         nn.init.xavier_uniform_(self.encoder.weight)
-
+        """
 
         self.stride = stride
         self.padding = padding
