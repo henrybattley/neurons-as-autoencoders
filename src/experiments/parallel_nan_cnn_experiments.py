@@ -5,6 +5,8 @@ import random
 import time
 
 from src.models import parallel_nan_cnn
+from src.models import nan_cnn
+
 
 torch.backends.cudnn.benchmark = True
 
@@ -69,7 +71,24 @@ def train_parallel_nan_cnn(  data,
                                                       n_filters=n_filters,
                                                       classes=n_classes).to(device)
 
-    
+    linear_model = nan_cnn.FilterCNN(
+        input_dims=28,
+        pool_kernel_size=2,
+        pool_stride=2,
+        kernel_size=3,
+        stride=1,
+        padding=1,
+        n_filters=16,
+        classes=10
+    ).to(device)
+
+    with torch.no_grad():
+        for j, f in enumerate(linear_model.filters):
+            model.encoder.weight[j] = f.encoder.weight[0]
+            model.encoder.bias[j] = f.encoder.bias[0]
+            model.decoder.weight[j] = f.decoder.weight[0]
+            model.decoder.bias[j] = f.decoder.bias[0]
+
     #autoencoding loss is MSE of reconstruction vs input
     encoder_criterion = torch.nn.MSELoss().to(device)
 
