@@ -22,10 +22,10 @@ def train_nan_cnn(  data,
                     input_dims,
                     n_epochs=100, 
                     batch_size=64,
-                    #learning_rate=0.001, 
+                    dual_lr = False,
+                    learning_rate=0.001, 
                     classifier_lr=0.0001,
-                    au_lr=0.001,
-
+                    ae_lr=0.001,
                     n_filters=16,
                     stride=1,
                     padding=1,
@@ -91,12 +91,17 @@ def train_nan_cnn(  data,
 
     #classifier loss is cross entropy
     classifier_criterion = torch.nn.CrossEntropyLoss().to(device)
+
+    #when using one singular learning rate for the optimisers
+    if dual_lr == False:
+         ae_lr = learning_rate
+         classifier_lr = learning_rate
   
     # separate optimisers are stored per filter, where each filter's parameters span the encoding and decoding weights and biases
     filter_optimizers = [
         torch.optim.Adam(
             model.filters[j].parameters(),
-            lr=au_lr
+            lr=ae_lr
         )
         for j in range(n_filters)
     ]
