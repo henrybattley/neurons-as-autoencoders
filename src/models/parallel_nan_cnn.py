@@ -20,6 +20,14 @@ class GroupedLocalAutoencoders(nn.Module):
             groups=n_filters  # Fully isolates each encoder filter!
         )
 
+        #encoder He initialiasion for pre relu gates 
+        nn.init.kaiming_normal_(
+                                self.encoder.weight,
+                                mode="fan_out",
+                                nonlinearity="relu"
+        )
+        nn.init.zeros_(self.encoder.bias)
+
         # Grouped Decoder: In=N, Out=N, Groups=N
         # Means: Feature Map 0 ONLY goes to Decoder 0, etc.
         self.decoder = nn.ConvTranspose2d(
@@ -30,12 +38,19 @@ class GroupedLocalAutoencoders(nn.Module):
             padding=padding,
             groups=n_filters  # Fully isolates each decoder filter!
         )
+                #xavier is useful for symmetric activations (like sigmoid)
+        nn.init.xavier_normal_(self.decoder.weight)
+        nn.init.zeros_(self.decoder.bias)
 
         self.activation = nn.ReLU()
 
         #change to parameterise
         self.pool = nn.MaxPool2d(2, 2)
         self.fc = nn.Linear(n_filters * 14 * 14, classes)
+
+        #xavier init for linear fully connected
+        nn.init.xavier_normal_(self.fc.weight)
+        nn.init.zeros_(self.fc.bias)
 
 
 
