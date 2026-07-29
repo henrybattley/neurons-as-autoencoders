@@ -2635,23 +2635,33 @@ def train_nan_cnn_diverse_filters_show_features(  data,
         correct = 0
         total = 0
 
-
-        #get the frobenius here
-        W= []
-
-        W.append(filter_optimizers[j].encoder.weight for j in range(n_filters))
-
-        print(f"W shape is: {W.shape}")
-    
-
         #per batch
         for images, labels in train_loader:
 
             images = images.to(device)
             labels = labels.to(device)
 
+
             # each filter encodes and decodes their input (would be performed in parallel on specialised hardware)
             for j in range(n_filters):
+
+                #get the frobenius here, updated with every filter 
+                W = torch.stack([
+                    f.encoder.weight.view(-1)
+                    for f in model.filters
+                ])
+                #print(f"W shape is: {W.shape}")
+
+
+                #W_frob = torch.linalg.matrix_norm(W)
+                #W_frob = torch.sqrt(torch.trace(W.T@W))
+
+                I = I = torch.eye(W.shape[1], device=device)
+                # row or column formulation? (the below makes more sense since we get the 9x9 kernel matrix)
+                orth = W.T@W - I
+
+                #orth_frob = torch.sqrt(torch.trace(orth.T@orth))
+                loss_frob = torch.linalg.matrix_norm(orth, ord='fro')**2
 
                 
                 #get the optimiser associeted with filter
@@ -2661,7 +2671,7 @@ def train_nan_cnn_diverse_filters_show_features(  data,
 
                 x_hat = model.reconstruct(images, j)
 
-                loss = encoder_criterion(x_hat, images) + lambda_frob* frob
+                loss = encoder_criterion(x_hat, images) + lambda_frob* loss_frob
 
                 loss.backward()
 
