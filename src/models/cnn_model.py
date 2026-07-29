@@ -69,4 +69,11 @@ class CNN(nn.Module):
 
         x = self.fc(x)
         return x
+
+    #function only called when visualising the activations
+    def feature_maps(self,x):
+        maps = F.relu(self.conv1(x))
+        return maps
+
+
     

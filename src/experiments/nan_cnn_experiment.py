@@ -385,17 +385,18 @@ def train_nan_cnn_show_features(  data,
                 f.decoder.weight.squeeze().cpu().clone()
                 for f in model.filters
             ])
-                #get the classifier prediction
-                with torch.no_grad():
 
-                    logits = model(probe_image)
-                    prediction = logits.argmax(1).item()
+
+                logits = model(probe_image)
+                prediction = logits.argmax(1).item()
 
                 feature_history[epoch + 1] = {
                     "label": probe_label,
                     "prediction":prediction,
+                    "logits": logits.cpu().clone(),
                     "original": probe_image.cpu().clone(),
                     "maps": maps.cpu().clone(),
+                    "pooled_maps": pooled_maps.cpu().clone(),
                     "reconstructions": recons.cpu().clone(),
                     "encoder_weights": weights.cpu(),
                     "decoder_weights": decoder_weights.cpu()

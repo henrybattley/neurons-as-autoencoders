@@ -98,6 +98,123 @@ def train_cnn(  data,
     return model, training_history,elapsed
 
 
+def train_cnn_get_features(  data, 
+                input_dims,
+                n_epochs=100, 
+                batch_size=64,
+                learning_rate=0.001,
+                n_filters=16,
+                stride=1,
+                padding=1,
+                kernel_size=3,
+                pool_kernel_size=2,
+                pool_stride=2,
+                n_classes=10,
+                bias=True,
+                epochs_to_show=[1],
+                seed=42):
+    
+
+    training_history = {
+    "train_loss": [],
+    "train_accuracy":[],
+    "test_loss": []
+    }
+
+    feature_history= {}
+    
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"device is: {device}")
+
+    #seed randomness 
+    random.seed(seed)
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    torch.use_deterministic_algorithms(True)
+
+    g = torch.Generator()
+    g.manual_seed(seed)
+
+    #starting time from data loading
+    start = time.perf_counter()
+
+    train_loader = torch.utils.data.DataLoader(
+    data,
+    batch_size=batch_size,
+    shuffle=True,
+    generator=g,
+    num_workers=0,  
+    pin_memory=True,
+    )
+
+
+    model = cnn_model.CNN(
+        input_dims=input_dims,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        n_filters=n_filters,
+        pool_kernel_size=pool_kernel_size,
+        pool_stride=pool_stride,
+        classes=n_classes,
+        bias=bias
+    ).to(device)
+
+    #image for inspection..
+    probe_image, probe_label = data[0]
+    probe_image = probe_image.unsqueeze(0).to(device)
+
+    criterion = torch.nn.CrossEntropyLoss()
+    criterion.to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    # Training loop..
+    for epoch in range(n_epochs):
+            
+        train_loss,accuracy = global_backprop.train(model, train_loader, criterion, optimizer, device)
+
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Training Loss: {train_loss:.4f}, Training Accuracy: {accuracy:.2f}")
+
+        training_history["train_loss"].append(train_loss)
+        training_history["train_accuracy"].append(accuracy)
+
+        if (epoch + 1) in epochs_to_show:
+
+            with torch.no_grad():
+
+                #get the unpooled feature maps
+                maps = model.feature_maps(probe_image)
+
+                pooled_maps = model.pool(maps)
+
+                cnn_weights = model.conv1.weight.detach().cpu().clone()
+                
+                logits = model(probe_image)
+                prediction = logits.argmax(1).item()
+
+                feature_history[epoch + 1] = {
+                    "label": probe_label,
+                    "prediction":prediction,
+                    "logits": logits.cpu().clone(),
+                    "original": probe_image.cpu().clone(),
+                    "maps": maps.cpu().clone(),
+                    "pooled_maps": pooled_maps.cpu().clone(),
+                    "encoder_weights": cnn_weights.cpu(),
+                }
+
+
+    elapsed = time.perf_counter() - start
+    return model, training_history, feature_history, elapsed
+
+
 
 def train_no_pool_cnn(  data, 
                 input_dims,
