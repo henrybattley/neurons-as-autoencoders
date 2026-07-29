@@ -178,15 +178,9 @@ def train_cnn_get_features(  data,
 
     # Training loop..
     for epoch in range(n_epochs):
-            
-        train_loss,accuracy = global_backprop.train(model, train_loader, criterion, optimizer, device)
 
-        print(f"Epoch [{epoch + 1}/{n_epochs}], Training Loss: {train_loss:.4f}, Training Accuracy: {accuracy:.2f}")
 
-        training_history["train_loss"].append(train_loss)
-        training_history["train_accuracy"].append(accuracy)
-
-        if (epoch + 1) in epochs_to_show:
+        if (epoch) in epochs_to_show:
 
             with torch.no_grad():
 
@@ -200,7 +194,7 @@ def train_cnn_get_features(  data,
                 logits = model(probe_image)
                 prediction = logits.argmax(1).item()
 
-                feature_history[epoch + 1] = {
+                feature_history[epoch] = {
                     "label": probe_label,
                     "prediction":prediction,
                     "logits": logits.cpu().clone(),
@@ -209,6 +203,17 @@ def train_cnn_get_features(  data,
                     "pooled_maps": pooled_maps.cpu().clone(),
                     "kernel_weights": cnn_weights.cpu(),
                 }
+
+
+            
+        train_loss,accuracy = global_backprop.train(model, train_loader, criterion, optimizer, device)
+
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Training Loss: {train_loss:.4f}, Training Accuracy: {accuracy:.2f}")
+
+        training_history["train_loss"].append(train_loss)
+        training_history["train_accuracy"].append(accuracy)
+
+
 
 
     elapsed = time.perf_counter() - start
