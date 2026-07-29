@@ -2483,6 +2483,241 @@ def train_rotating_input_nan_cnn(  data,
 
 
 
+def train_nan_cnn_diverse_filters_show_features(  data, 
+                    input_dims,
+                    n_epochs=100, 
+                    batch_size=64,
+                    dual_lr = False,
+                    learning_rate=0.001, 
+                    classifier_lr=0.0001,
+                    ae_lr=0.001,
+                    n_filters=16,
+                    stride=1,
+                    padding=1,
+                    kernel_size=3,
+                    pool_kernel_size=2,
+                    pool_stride=2,
+                    n_classes=10,
+                    epochs_to_show=[1],
+                    lambda_frob=0.001,
+                    seed=42):
+    
+    training_history = {
+    "encoder_train_loss": [],
+    "task_train_loss": [],
+    "train_accuracy": []
+    }
+
+    feature_history = {}
+        
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"device is: {device}")
+
+    #seed randomness 
+    random.seed(seed)
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    torch.use_deterministic_algorithms(True)
+
+    g = torch.Generator()
+    g.manual_seed(seed)
+
+    #starting time from data loading
+    start = time.perf_counter()
+
+    train_loader = torch.utils.data.DataLoader(
+    data,
+    batch_size=batch_size,
+    shuffle=True,
+    generator=g,
+    num_workers=0,  
+    pin_memory=True,
+    )
+
+    #defining the FilterCNN model (network of filter autoencoders with classifier head)
+    model = nan_cnn.FilterCNN(
+        input_dims=input_dims,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        n_filters=n_filters,
+        pool_kernel_size=pool_kernel_size,
+        pool_stride=pool_stride,
+        classes=n_classes
+    ).to(device)
+
+    #image to track across the epochs
+    probe_image, probe_label = data[0]
+    probe_image = probe_image.unsqueeze(0).to(device)
+        
+
+    #autoencoding loss is MSE of reconstruction vs input
+    encoder_criterion = torch.nn.MSELoss().to(device)
+
+    #classifier loss is cross entropy
+    classifier_criterion = torch.nn.CrossEntropyLoss().to(device)
+
+    #when using one singular learning rate for the optimisers
+    if dual_lr == False:
+         ae_lr = learning_rate
+         classifier_lr = learning_rate
+  
+    # separate optimisers are stored per filter, where each filter's parameters span the encoding and decoding weights and biases
+    filter_optimizers = [
+        torch.optim.Adam(
+            model.filters[j].parameters(),
+            lr=ae_lr
+        )
+        for j in range(n_filters)
+    ]
+
+    #classifier optimiser only adjusts weights of the fully connected layer
+    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=classifier_lr)
+
+
+    for epoch in range(n_epochs):
+
+        if (epoch) in epochs_to_show:
+
+            with torch.no_grad():
+
+                #get the unpooled feature maps
+                maps = model.feature_maps(probe_image)
+
+                #get the pooled feature maps before flattening
+                pooled_maps = model.pool(maps)
+
+                #get the reconstruction for every filter
+                recons = torch.cat(
+                    [f(probe_image) for f in model.filters],
+                    dim=1
+                )
+
+                #encoder weights
+                weights = torch.stack([
+                    f.encoder.weight.squeeze().cpu().clone()
+                    for f in model.filters
+                ])
+
+                #decoder weights 
+                decoder_weights = torch.stack([
+                f.decoder.weight.squeeze().cpu().clone()
+                for f in model.filters
+            ])
+                #make the prediction
+                logits = model(probe_image)
+                prediction = logits.argmax(1).item()
+
+                feature_history[epoch] = {
+                    "label": probe_label,
+                    "prediction":prediction,
+                    "logits": logits.cpu().clone(),
+                    "original": probe_image.cpu().clone(),
+                    "maps": maps.cpu().clone(),
+                    "pooled_maps": pooled_maps.cpu().clone(),
+                    "reconstructions": recons.cpu().clone(),
+                    "encoder_weights": weights.cpu(),
+                    "decoder_weights": decoder_weights.cpu()
+
+                }
+
+        encoder_epoch_loss =0.0
+        classifier_epoch_loss =0.0
+
+        correct = 0
+        total = 0
+
+
+        #get the frobenius here
+        W= []
+
+        W.append(filter_optimizers[j].encoder.weight for j in range(n_filters))
+
+        print(f"W shape is: {W.shape}")
+    
+
+        #per batch
+        for images, labels in train_loader:
+
+            images = images.to(device)
+            labels = labels.to(device)
+
+            # each filter encodes and decodes their input (would be performed in parallel on specialised hardware)
+            for j in range(n_filters):
+
+                
+                #get the optimiser associeted with filter
+                optimizer = filter_optimizers[j]
+
+                optimizer.zero_grad()
+
+                x_hat = model.reconstruct(images, j)
+
+                loss = encoder_criterion(x_hat, images) + lambda_frob* frob
+
+                loss.backward()
+
+                optimizer.step()
+
+                encoder_epoch_loss += loss.item()
+   
+
+            classifier_optimizer.zero_grad()
+
+            with torch.no_grad():
+                features = model.extract_features(images)
+
+
+            logits = model.classify(features)
+            
+            loss = classifier_criterion(logits, labels)
+
+            loss.backward()
+
+            classifier_optimizer.step()
+
+            classifier_epoch_loss += loss.item()
+
+            # Classification accuracy
+            predictions = torch.argmax(logits, dim=1)
+            correct += (predictions == labels).sum().item()
+            total += labels.size(0)
+
+        
+        #for average autoencoder loss, divide by the batch size and then the n filters
+        avg_encoder_loss = encoder_epoch_loss / len(train_loader)
+        avg_encoder_loss /= n_filters
+
+        #for average classification loss, divide by the batch size and then form as percentage
+        avg_classifier_loss = classifier_epoch_loss / len(train_loader)
+        classification_accuracy = 100.0 * correct / total
+
+
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Training Loss: {avg_encoder_loss:.4f}")
+
+        training_history["encoder_train_loss"].append(avg_encoder_loss)
+
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Task Training Loss: {avg_classifier_loss:.4f}, Accuracy: {classification_accuracy:.2f}%")
+
+        training_history["task_train_loss"].append(avg_classifier_loss)
+        
+        training_history["train_accuracy"].append(classification_accuracy)
+        
+        
+    elapsed = time.perf_counter() - start
+
+    return model, training_history, feature_history, elapsed
+
+
+
 
 
 
