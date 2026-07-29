@@ -306,6 +306,50 @@ def train_nan_cnn_show_features(  data,
 
     for epoch in range(n_epochs):
 
+        if (epoch) in epochs_to_show:
+
+            with torch.no_grad():
+
+                #get the unpooled feature maps
+                maps = model.feature_maps(probe_image)
+
+                #get the pooled feature maps before flattening
+                pooled_maps = model.pool(maps)
+
+                #get the reconstruction for every filter
+                recons = torch.cat(
+                    [f(probe_image) for f in model.filters],
+                    dim=1
+                )
+
+                #encoder weights
+                weights = torch.stack([
+                    f.encoder.weight.squeeze().cpu().clone()
+                    for f in model.filters
+                ])
+
+                #decoder weights 
+                decoder_weights = torch.stack([
+                f.decoder.weight.squeeze().cpu().clone()
+                for f in model.filters
+            ])
+                #make the prediction
+                logits = model(probe_image)
+                prediction = logits.argmax(1).item()
+
+                feature_history[epoch] = {
+                    "label": probe_label,
+                    "prediction":prediction,
+                    "logits": logits.cpu().clone(),
+                    "original": probe_image.cpu().clone(),
+                    "maps": maps.cpu().clone(),
+                    "pooled_maps": pooled_maps.cpu().clone(),
+                    "reconstructions": recons.cpu().clone(),
+                    "encoder_weights": weights.cpu(),
+                    "decoder_weights": decoder_weights.cpu()
+
+                }
+
         encoder_epoch_loss =0.0
         classifier_epoch_loss =0.0
 
@@ -357,51 +401,6 @@ def train_nan_cnn_show_features(  data,
             predictions = torch.argmax(logits, dim=1)
             correct += (predictions == labels).sum().item()
             total += labels.size(0)
-
-
-        if (epoch + 1) in epochs_to_show:
-
-            with torch.no_grad():
-
-                #get the unpooled feature maps
-                maps = model.feature_maps(probe_image)
-
-                #get the pooled feature maps before flattening
-                #pooled_maps = model.extract_features(probe_image)
-                pooled_maps = model.pool(maps)
-
-
-                recons = torch.cat(
-                    [f(probe_image) for f in model.filters],
-                    dim=1
-                )
-                #encoder weights
-                weights = torch.stack([
-                    f.encoder.weight.squeeze().cpu().clone()
-                    for f in model.filters
-                ])
-
-                decoder_weights = torch.stack([
-                f.decoder.weight.squeeze().cpu().clone()
-                for f in model.filters
-            ])
-
-
-                logits = model(probe_image)
-                prediction = logits.argmax(1).item()
-
-                feature_history[epoch + 1] = {
-                    "label": probe_label,
-                    "prediction":prediction,
-                    "logits": logits.cpu().clone(),
-                    "original": probe_image.cpu().clone(),
-                    "maps": maps.cpu().clone(),
-                    "pooled_maps": pooled_maps.cpu().clone(),
-                    "reconstructions": recons.cpu().clone(),
-                    "encoder_weights": weights.cpu(),
-                    "decoder_weights": decoder_weights.cpu()
-
-                }
 
         
         #for average autoencoder loss, divide by the batch size and then the n filters
