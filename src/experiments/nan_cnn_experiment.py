@@ -2745,7 +2745,7 @@ def train_nan_cnn_diverse_filters_show_features_localised(  data,
                     pool_stride=2,
                     n_classes=10,
                     epochs_to_show=[1],
-                    lambda_cosine=0.001,
+                    lambda_cosine=0.2,
                     seed=42):
     
     training_history = {
