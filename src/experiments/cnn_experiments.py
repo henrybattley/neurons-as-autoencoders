@@ -207,7 +207,7 @@ def train_cnn_get_features(  data,
                     "original": probe_image.cpu().clone(),
                     "maps": maps.cpu().clone(),
                     "pooled_maps": pooled_maps.cpu().clone(),
-                    "encoder_weights": cnn_weights.cpu(),
+                    "kernel_weights": cnn_weights.cpu(),
                 }
 
 
