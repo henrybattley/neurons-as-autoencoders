@@ -310,6 +310,166 @@ def train_no_pool_cnn(  data,
 
 
 
+def train_ae_cnn(  data, 
+                input_dims,
+                n_epochs=100, 
+                batch_size=64,
+                learning_rate=0.001,
+                n_filters=16,
+                stride=1,
+                padding=1,
+                kernel_size=3,
+                pool_kernel_size=2,
+                pool_stride=2,
+                n_classes=10,
+                bias=True,
+                epochs_to_show=[1],
+                seed=42):
+    
+
+    training_history = {
+    "task_train_loss": [],
+    "train_accuracy":[],
+    "encoder_train_loss": [],
+
+
+    }
+
+    feature_history= {}
+    
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"device is: {device}")
+
+    #seed randomness 
+    random.seed(seed)
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    torch.use_deterministic_algorithms(True)
+
+    g = torch.Generator()
+    g.manual_seed(seed)
+
+    #starting time from data loading
+    start = time.perf_counter()
+
+    train_loader = torch.utils.data.DataLoader(
+    data,
+    batch_size=batch_size,
+    shuffle=True,
+    generator=g,
+    num_workers=0,  
+    pin_memory=True,
+    )
+
+
+    model = conv_autoencoder.CNN_AE(
+        input_dims=input_dims,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        n_filters=n_filters,
+        pool_kernel_size=pool_kernel_size,
+        pool_stride=pool_stride,
+        classes=n_classes,
+        bias=bias
+    ).to(device)
+
+
+
+    encoder_criterion = torch.nn.MSELoss()
+    encoder_criterion.to(device)
+
+    task_criterion = torch.nn.CrossEntropyLoss()
+    task_criterion.to(device)
+
+
+    ae_optimizer = torch.optim.Adam(
+    list(model.encoder.parameters()) +
+    list(model.decoder.parameters()),
+    lr=learning_rate
+)
+
+    classifier_optimizer = torch.optim.Adam(model.fc.parameters(), lr=learning_rate)
+
+
+    # Training loop..
+    for epoch in range(n_epochs):
+
+            
+        #train_loss,accuracy = global_backprop.train(model, train_loader, criterion, optimizer, device)
+
+        model.train()
+
+        encoder_epoch_loss=0.0
+        task_epoch_loss = 0.0
+
+        correct = 0
+        total_samples = 0
+
+        for inputs, labels in train_loader:
+            inputs = inputs.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
+
+            ae_optimizer.zero_grad()
+
+            x_hat = model.autoencode(inputs)
+            encoder_loss = encoder_criterion(x_hat,inputs)
+
+            encoder_loss.backward()
+            ae_optimizer.step()
+
+            encoder_epoch_loss+=encoder_loss.item()
+
+            #now train the classifier
+
+            classifier_optimizer.zero_grad()
+            
+            with torch.no_grad():
+
+                features = model.encode(inputs)
+
+            task_outputs = model.classify(features)
+
+            task_loss = task_criterion(task_outputs, labels)
+            task_loss.backward()
+            classifier_optimizer.step()
+
+            task_epoch_loss += task_loss.item()
+
+            _, predicted = torch.max(task_outputs, 1)
+            correct += (predicted == labels).sum()
+            total_samples += labels.size(0)
+
+        avg_encoder_loss = encoder_epoch_loss / len(train_loader)
+        #scale encoder loss to be the same as our filters as autoencoders method?
+        #avg_encoder_loss /= n_filters
+
+        avg_task_loss = task_epoch_loss/ len(train_loader)
+        accuracy = 100 * correct.item() / total_samples
+
+
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Loss: {avg_encoder_loss:.4f}")
+        training_history["encoder_train_loss"].append(avg_encoder_loss)
+
+
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Training Loss: {avg_task_loss:.4f}, Training Accuracy: {accuracy:.2f}")
+        training_history["task_train_loss"].append(avg_task_loss)
+        training_history["train_accuracy"].append(accuracy)
+
+
+    elapsed = time.perf_counter() - start
+    return model, training_history, feature_history, elapsed
+
+
+
 def train_ae_cnn_get_features(  data, 
                 input_dims,
                 n_epochs=100, 
@@ -436,8 +596,6 @@ def train_ae_cnn_get_features(  data,
                 }
 
 
-            
-        #train_loss,accuracy = global_backprop.train(model, train_loader, criterion, optimizer, device)
 
         model.train()
 
@@ -459,13 +617,15 @@ def train_ae_cnn_get_features(  data,
             encoder_loss.backward()
             ae_optimizer.step()
 
-            encoder_epoch_loss+=encoder_loss
+            encoder_epoch_loss+=encoder_loss.item()
 
             #now train the classifier
 
             classifier_optimizer.zero_grad()
+            
+            with torch.no_grad():
 
-            features = model.encode(inputs)
+                features = model.encode(inputs)
 
             task_outputs = model.classify(features)
 
@@ -473,18 +633,18 @@ def train_ae_cnn_get_features(  data,
             task_loss.backward()
             classifier_optimizer.step()
 
-            task_epoch_loss += task_loss.detach() 
+            task_epoch_loss += task_loss.item()
 
             _, predicted = torch.max(task_outputs, 1)
             correct += (predicted == labels).sum()
             total_samples += labels.size(0)
 
-        avg_encoder_loss = encoder_epoch_loss.item() / len(train_loader)
-        #scale encoder loss to be the same as our filters as autoencoders method
-        avg_encoder_loss /= n_filters
+        avg_encoder_loss = encoder_epoch_loss / len(train_loader)
+        #scale encoder loss to be the same as our filters as autoencoders method?
+        #avg_encoder_loss /= n_filters
 
-        avg_task_loss = task_epoch_loss.item() / len(train_loader)
-        accuracy = correct.item() / total_samples
+        avg_task_loss = task_epoch_loss/ len(train_loader)
+        accuracy = 100 * correct.item() / total_samples
 
 
         print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Loss: {avg_encoder_loss:.4f}")

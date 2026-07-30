@@ -102,7 +102,7 @@ class CNN_AE(nn.Module):
         h_pool = self.pool(h)
 
         #flatten here
-        h_pool_flat = h_pool.view(h_pool.size(0), -1)  
+        h_pool_flat = torch.flatten(h_pool, 1)
 
         pred = self.fc(h_pool_flat)
         return pred
