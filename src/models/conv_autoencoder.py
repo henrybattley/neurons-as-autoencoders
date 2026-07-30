@@ -1,0 +1,117 @@
+import torch
+import torch.nn as nn  # neural network modules
+import torch.nn.functional as F  # useful stateless functions
+
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
+
+class CNN_AE(nn.Module):
+    def __init__(self,
+                 input_dims,
+                 kernel_size,
+                 stride,
+                 padding, 
+                 n_filters, 
+                 classes,
+                 pool_kernel_size,
+                 pool_stride,
+                 bias=True 
+    ):
+        super(CNN_AE, self).__init__()
+
+        self.input_dims = input_dims
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding =padding
+        self.n_filters = n_filters
+        self.classes = classes
+        self.pool_kernel_size=pool_kernel_size
+        self.pool_stride = pool_stride
+
+
+        
+        # 1st conv block (creates n_filters feature mappings)
+        self.encoder = nn.Conv2d(
+            in_channels=1, 
+            out_channels=n_filters,
+            kernel_size=kernel_size,
+            stride=stride, 
+            padding=padding,
+            bias=bias)
+        
+        #He initialisation pre relu activation
+        nn.init.kaiming_normal_(self.encoder.weight)
+        
+        if bias == True:
+            nn.init.zeros_(self.encoder.bias)
+
+        self.decoder = nn.ConvTranspose2d(
+            in_channels=1,
+            out_channels=1,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            bias=bias)
+        
+        #xavier is useful for symmetric activations (like sigmoid)
+        nn.init.xavier_normal_(self.decoder.weight)
+
+        if bias == True:
+            nn.init.zeros_(self.decoder.bias)
+
+
+        #modern standard activation within convolutional networks is relu
+        self.activation = nn.ReLU()
+
+
+
+
+        self.pool = nn.MaxPool2d(kernel_size=pool_kernel_size, stride=pool_stride) 
+
+        #this calculation used for the flattened dims only works with square input..
+        conv_dim = ((input_dims + 2*padding - kernel_size) // stride) + 1             
+        pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1        
+
+        self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
+
+        #xavier init for fc
+        nn.init.xavier_normal_(self.fc.weight)
+        nn.init.zeros_(self.fc.bias)
+
+    def encode(self,x):
+
+        h = self.activation(self.encoder(x))
+
+        return h
+
+        #calls encode and decode the latent feature representation (used by individual filters)
+    def autoencode(self, x):
+
+        h = self.encode(x)
+
+        #experiment with different activation here-- perhaps no sigmoid
+        x_hat = torch.sigmoid(self.decoder(h))
+
+        return x_hat
+
+
+    def forward(self, x):
+        #x is (batch, 1, 28, 28)
+        #x = F.relu(self.conv1(x))
+        x_hat = self.autoencode(x)
+        x_hat = self.pool(x_hat)
+
+        #flatten here
+        x_hat = x_hat.view(x_hat.size(0), -1)  
+
+        pred = self.fc(x_hat)
+        return pred
+
+    #function only called when visualising the activations
+    def feature_maps(self,x):
+        maps = F.relu(self.conv1(x))
+        return maps
+
+
+    
