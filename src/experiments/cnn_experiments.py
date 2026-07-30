@@ -240,7 +240,7 @@ def train_no_pool_cnn(  data,
     
 
     training_history = {
-    "task_train_loss": [],
+    "train_loss": [],
     "train_accuracy":[],
     "test_loss": []
     }
@@ -328,7 +328,7 @@ def train_ae_cnn_get_features(  data,
     
 
     training_history = {
-    "train_loss": [],
+    "task_train_loss": [],
     "train_accuracy":[],
     "encoder_train_loss": [],
 
