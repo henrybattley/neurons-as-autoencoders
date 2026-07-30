@@ -3207,7 +3207,7 @@ def train_nan_cnn_diverse_activations_show_features_localised(  data,
 
 
                     loss_div += F.cosine_similarity(
-                        pool_maps_k,
+                        pool_map_j,
                         pool_maps_k,
                         dim=1,
 
