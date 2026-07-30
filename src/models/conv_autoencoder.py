@@ -47,7 +47,7 @@ class CNN_AE(nn.Module):
             nn.init.zeros_(self.encoder.bias)
 
         self.decoder = nn.ConvTranspose2d(
-            in_channels=1,
+            in_channels=n_filters,
             out_channels=1,
             kernel_size=kernel_size,
             stride=stride,
@@ -64,9 +64,6 @@ class CNN_AE(nn.Module):
         #modern standard activation within convolutional networks is relu
         self.activation = nn.ReLU()
 
-
-
-
         self.pool = nn.MaxPool2d(kernel_size=pool_kernel_size, stride=pool_stride) 
 
         #this calculation used for the flattened dims only works with square input..
@@ -79,6 +76,7 @@ class CNN_AE(nn.Module):
         nn.init.xavier_normal_(self.fc.weight)
         nn.init.zeros_(self.fc.bias)
 
+    #can be called to visualise activations
     def encode(self,x):
 
         h = self.activation(self.encoder(x))
@@ -96,22 +94,20 @@ class CNN_AE(nn.Module):
         return x_hat
 
 
-    def forward(self, x):
+    def classify(self, h):
         #x is (batch, 1, 28, 28)
         #x = F.relu(self.conv1(x))
-        x_hat = self.autoencode(x)
-        x_hat = self.pool(x_hat)
+
+        #x_hat = self.encode(x)
+        h_pool = self.pool(h)
 
         #flatten here
-        x_hat = x_hat.view(x_hat.size(0), -1)  
+        h_pool_flat = h_pool.view(h_pool.size(0), -1)  
 
-        pred = self.fc(x_hat)
+        pred = self.fc(h_pool_flat)
         return pred
 
-    #function only called when visualising the activations
-    def feature_maps(self,x):
-        maps = F.relu(self.conv1(x))
-        return maps
+
 
 
     
