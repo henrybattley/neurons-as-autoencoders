@@ -2936,7 +2936,7 @@ def train_nan_cnn_diverse_filters_show_features_localised(  data,
 
                 loss = recon_loss + similarity
 
-                print(f"recon: {recon_loss} similarity (scaled): {similarity}")
+                #print(f"recon: {recon_loss} similarity (scaled): {similarity}")
 
                 loss.backward()
 
