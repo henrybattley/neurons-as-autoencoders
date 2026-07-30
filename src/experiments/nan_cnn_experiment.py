@@ -2891,24 +2891,26 @@ def train_nan_cnn_diverse_filters_show_features_localised(  data,
             # each filter encodes and decodes their input (would be performed in parallel on specialised hardware)
             for j in range(n_filters):
 
+                """ I would say get the other weights only when not equal to the current filter being optimised
                 weights = torch.stack([
                 f.encoder.weight.view(-1).detach()
                 for f in model.filters
-                ])
+                ]) """
 
                 w_j = model.filters[j].encoder.weight.view(-1)
+                loss_div = 0
 
                 #take the norm of all other weights
-                weights = F.normalize(weights, dim=1)
+                #weights = F.normalize(weights, dim=1)
 
-                similarities = weights @ weights[j]
+                #similarities = weights @ weights[j]
 
-                loss_div = similarities.pow(2).sum() - similarities[j].pow(2)
+                #loss_div = similarities.pow(2).sum() - similarities[j].pow(2)
 
                 # scale by how many filters contained within the similarity computation
-                loss_div /= (n_filters - 1)
+                #loss_div /= (n_filters - 1)
 
-                """ 
+                
                 for k in range(n_filters):
 
                     if k == j:
@@ -2920,9 +2922,7 @@ def train_nan_cnn_diverse_filters_show_features_localised(  data,
                         w_j.unsqueeze(0),
                         w_k.unsqueeze(0)
                     ).pow(2)
-                """
-
-
+                
 
                 #get the optimiser associeted with filter
                 optimizer = filter_optimizers[j]
@@ -2936,7 +2936,7 @@ def train_nan_cnn_diverse_filters_show_features_localised(  data,
 
                 loss = recon_loss + similarity
 
-                #print(f"recon: {recon_loss} similarity (scaled): {similarity}")
+                print(f"recon: {recon_loss} similarity (scaled): {similarity}")
 
                 loss.backward()
 
