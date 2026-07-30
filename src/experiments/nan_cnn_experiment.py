@@ -2750,6 +2750,8 @@ def train_nan_cnn_diverse_filters_show_features_localised(  data,
     
     training_history = {
     "encoder_train_loss": [],
+    "recon_train_loss": [],
+    "sim_train_loss": [],
     "task_train_loss": [],
     "train_accuracy": []
     }
@@ -2876,6 +2878,8 @@ def train_nan_cnn_diverse_filters_show_features_localised(  data,
                 }
 
         encoder_epoch_loss =0.0
+        recon_epoch_loss=0.0
+        similarity_epoch_loss=0.0
         classifier_epoch_loss =0.0
 
         correct = 0
@@ -2943,6 +2947,8 @@ def train_nan_cnn_diverse_filters_show_features_localised(  data,
                 optimizer.step()
 
                 encoder_epoch_loss += loss.item()
+                recon_epoch_loss += recon_loss.item()
+                similarity_epoch_loss += similarity.item()
    
 
             classifier_optimizer.zero_grad()
@@ -2971,19 +2977,35 @@ def train_nan_cnn_diverse_filters_show_features_localised(  data,
         avg_encoder_loss = encoder_epoch_loss / len(train_loader)
         avg_encoder_loss /= n_filters
 
+        #same for the distinct reconstruction error
+        avg_recon_loss = recon_epoch_loss / len(train_loader)
+        avg_recon_loss /= n_filters
+
+        #same for the similarity between filters
+        avg_similarity_loss = similarity_epoch_loss / len(train_loader)
+        avg_similarity_loss /= n_filters
+
+
         #for average classification loss, divide by the batch size and then form as percentage
         avg_classifier_loss = classifier_epoch_loss / len(train_loader)
         classification_accuracy = 100.0 * correct / total
 
-
+        #print and append whole loss term used for training the autoencoder
         print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Training Loss: {avg_encoder_loss:.4f}")
-
         training_history["encoder_train_loss"].append(avg_encoder_loss)
 
+        #print and append the average reconstruction loss for the autoencoder
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Average reconstruction Loss: {avg_recon_loss:.4f}")
+        training_history["recon_train_loss"].append(avg_recon_loss)
+
+        #print and append the average cosine similarity between encoder filters
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Average similarity: {avg_similarity_loss:.4f}")
+        training_history["sim_train_loss"].append(avg_similarity_loss)
+
+        #print and append classification performance
         print(f"Epoch [{epoch + 1}/{n_epochs}], Task Training Loss: {avg_classifier_loss:.4f}, Accuracy: {classification_accuracy:.2f}%")
 
         training_history["task_train_loss"].append(avg_classifier_loss)
-        
         training_history["train_accuracy"].append(classification_accuracy)
         
         
