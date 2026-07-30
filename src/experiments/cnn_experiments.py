@@ -420,7 +420,7 @@ def train_ae_cnn_get_features(  data,
                 decoder_weights = model.decoder.weight.detach().cpu().clone()
 
                 
-                logits = model(model.encode(probe_image))
+                logits = model.classify(maps)
 
                 prediction = logits.argmax(1).item()
 
