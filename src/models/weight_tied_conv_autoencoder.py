@@ -44,8 +44,6 @@ class CNN_AE(nn.Module):
         #He initialisation pre relu activation
         nn.init.kaiming_normal_(self.encoder.weight)
         
-        if bias == True:
-            nn.init.zeros_(self.encoder.bias)
 
         """
         self.decoder = nn.ConvTranspose2d(
@@ -60,8 +58,12 @@ class CNN_AE(nn.Module):
         #xavier is useful for symmetric activations (like sigmoid)
 
 
-        if bias == True:
+        if bias:
+
+            nn.init.zeros_(self.encoder.bias)
             self.decoder_bias = nn.Parameter(torch.zeros(1))
+        else:
+            self.register_parameter("decoder_bias", None)
 
 
         #modern standard activation within convolutional networks is relu
@@ -90,8 +92,6 @@ class CNN_AE(nn.Module):
     def autoencode(self, x):
 
         h = self.encode(x)
-        if self.bias == False:
-            self.decoder_bias =  None
 
         
 
