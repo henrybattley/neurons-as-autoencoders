@@ -5,7 +5,7 @@ import torch.nn.functional as F  # useful stateless functions
 """defines each filter (kernel) with the function of encoding and decoding its input"""
 class ConvFilter(nn.Module):
     
-    def __init__(self, kernel_size=3,stride=1,padding=1):
+    def __init__(self, kernel_size=3,stride=1,padding=1, bias=True):
 
         super().__init__()
 
@@ -24,7 +24,9 @@ class ConvFilter(nn.Module):
                                 mode="fan_out",
                                 nonlinearity="relu"
         )
-        nn.init.zeros_(self.encoder.bias)
+
+        if bias == True:
+            nn.init.zeros_(self.encoder.bias)
 
         # decoder, uses transpose convolution to restore input dimensions
         self.decoder = nn.ConvTranspose2d(
@@ -37,7 +39,9 @@ class ConvFilter(nn.Module):
 
         #xavier is useful for symmetric activations (like sigmoid)
         nn.init.xavier_normal_(self.decoder.weight)
-        nn.init.zeros_(self.decoder.bias)
+
+        if bias == True:
+            nn.init.zeros_(self.decoder.bias)
 
         #modern standard activation within convolutional networks is relu
         self.activation = nn.ReLU()
@@ -73,7 +77,8 @@ class FilterCNN(nn.Module):
             n_filters:int,
             classes:int, 
             pool_kernel_size:int, 
-            pool_stride:int
+            pool_stride:int,
+            bias: bool
         ):
         
         super().__init__()
@@ -88,7 +93,7 @@ class FilterCNN(nn.Module):
         self.pool_stride = pool_stride
         
         #define the list of autoencoder filter submodules 
-        self.filters = nn.ModuleList([ConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
+        self.filters = nn.ModuleList([ConvFilter(kernel_size,stride,padding,bias)for _ in range(n_filters)])
 
         self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 
@@ -101,6 +106,8 @@ class FilterCNN(nn.Module):
 
         #xavier init for linear fully connected
         nn.init.xavier_normal_(self.fc.weight)
+
+
         nn.init.zeros_(self.fc.bias)
 
 
