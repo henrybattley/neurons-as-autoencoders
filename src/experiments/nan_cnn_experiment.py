@@ -84,7 +84,7 @@ def train_nan_cnn(  data,
         n_filters=n_filters,
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
-        bia=bias,
+        bias=bias,
         classes=n_classes
     ).to(device)
     
