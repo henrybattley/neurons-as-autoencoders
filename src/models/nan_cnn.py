@@ -91,6 +91,7 @@ class FilterCNN(nn.Module):
         self.classes = classes
         self.pool_kernel_size=pool_kernel_size
         self.pool_stride = pool_stride
+        self.bias= bias
         
         #define the list of autoencoder filter submodules 
         self.filters = nn.ModuleList([ConvFilter(kernel_size,stride,padding,bias)for _ in range(n_filters)])
