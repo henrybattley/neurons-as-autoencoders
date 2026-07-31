@@ -24,7 +24,7 @@ def train(model, data_loader, criterion, optimizer, device):
         total_samples += labels.size(0)
 
     avg_loss = epoch_loss.item() / len(data_loader)
-    accuracy = correct.item() / total_samples
+    accuracy = 100.0 * correct.item() / total_samples
 
     return avg_loss, accuracy
 
