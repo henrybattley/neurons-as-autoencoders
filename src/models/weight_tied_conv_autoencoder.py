@@ -28,6 +28,7 @@ class CNN_AE(nn.Module):
         self.classes = classes
         self.pool_kernel_size=pool_kernel_size
         self.pool_stride = pool_stride
+        self.bias =bias
 
 
         

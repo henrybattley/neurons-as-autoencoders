@@ -553,11 +553,16 @@ def train_ae_cnn_weight_tied(  data,
     task_criterion.to(device)
 
 
-    ae_optimizer = torch.optim.Adam(
-    list(model.encoder.parameters()) +
-    list(model.decoder.parameters()),
-    lr=learning_rate
-)
+    ae_params = [model.encoder.weight]
+
+    if model.encoder.bias is not None:
+        ae_params.append(model.encoder.bias)
+
+    if hasattr(model, "decoder_bias"):
+        ae_params.append(model.decoder_bias)
+
+    ae_optimizer = torch.optim.Adam(ae_params, lr=learning_rate)
+
 
     classifier_optimizer = torch.optim.Adam(model.fc.parameters(), lr=learning_rate)
 
