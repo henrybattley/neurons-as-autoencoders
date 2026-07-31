@@ -444,6 +444,7 @@ def train_weight_share_nan_cnn(  data,
                     pool_kernel_size=2,
                     pool_stride=2,
                     n_classes=10,
+                    bias=True,
                     seed=42):
     
     training_history = {
@@ -493,6 +494,7 @@ def train_weight_share_nan_cnn(  data,
         n_filters=n_filters,
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
+        bias=bias,
         classes=n_classes
     ).to(device)
     

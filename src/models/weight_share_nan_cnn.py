@@ -5,7 +5,7 @@ import torch.nn.functional as F  # useful stateless functions
 """defines each filter (kernel) with the function of encoding and decoding its input"""
 class WeightShareConvFilter(nn.Module):
     
-    def __init__(self, kernel_size=3,stride=1,padding=1):
+    def __init__(self, kernel_size=3,stride=1,padding=1,bias=True):
 
         super().__init__()
 
@@ -16,6 +16,7 @@ class WeightShareConvFilter(nn.Module):
             kernel_size=kernel_size,
             stride=stride,
             padding=padding,
+            bias=bias
         )
 
         #encoder He initialiasion for pre relu gates 
@@ -24,10 +25,12 @@ class WeightShareConvFilter(nn.Module):
                                 mode="fan_out",
                                 nonlinearity="relu"
         )
-        nn.init.zeros_(self.encoder.bias)
 
-        #decoder weights reuse the encoder's, however decoder has a bias term
-        self.decoder_bias = nn.Parameter(torch.zeros(1))
+        if bias == True: 
+            nn.init.zeros_(self.encoder.bias)
+
+            #decoder weights reuse the encoder's, however decoder has a bias term
+            self.decoder_bias = nn.Parameter(torch.zeros(1))
 
         self.stride = stride
         self.padding = padding
@@ -46,6 +49,10 @@ class WeightShareConvFilter(nn.Module):
     def forward(self, x):
 
         h = self.encode(x)
+
+        if self.bias == False:
+            self.decoder_bias =  None
+
 
         # do the transpose convolution but using the encoder weights
         x_hat = F.conv_transpose2d(
@@ -72,7 +79,8 @@ class FilterCNN(nn.Module):
             n_filters:int,
             classes:int, 
             pool_kernel_size:int, 
-            pool_stride:int
+            pool_stride:int,
+            bias:bool
         ):
         
         super().__init__()
@@ -85,9 +93,10 @@ class FilterCNN(nn.Module):
         self.classes = classes
         self.pool_kernel_size=pool_kernel_size
         self.pool_stride = pool_stride
+        self.bias = bias
         
         #define the list of autoencoder filter submodules 
-        self.filters = nn.ModuleList([WeightShareConvFilter(kernel_size,stride,padding)for _ in range(n_filters)])
+        self.filters = nn.ModuleList([WeightShareConvFilter(kernel_size,stride,padding,bias)for _ in range(n_filters)])
 
         self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 
