@@ -935,9 +935,7 @@ def train_ae_cnn_weight_tie_get_features(  data,
                 pooled_maps = model.pool(maps)
 
                 encoder_weights = model.encoder.weight.detach().cpu().clone()
-                decoder_weights = model.decoder.weight.detach().cpu().clone()
 
-                
                 logits = model.classify(maps)
 
                 prediction = logits.argmax(1).item()
@@ -950,7 +948,6 @@ def train_ae_cnn_weight_tie_get_features(  data,
                     "maps": maps.cpu().clone(),
                     "pooled_maps": pooled_maps.cpu().clone(),
                     "encoder_weights": encoder_weights.cpu(),
-                    "decoder_weights": decoder_weights.cpu()
                 }
 
 
