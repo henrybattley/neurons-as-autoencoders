@@ -93,8 +93,6 @@ class CNN_AE(nn.Module):
 
         h = self.encode(x)
 
-        
-
         # do the transpose convolution but using the encoder weights
         x_hat = F.conv_transpose2d(
         h,

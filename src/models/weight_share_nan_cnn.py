@@ -26,11 +26,13 @@ class WeightShareConvFilter(nn.Module):
                                 nonlinearity="relu"
         )
 
-        if bias == True: 
-            nn.init.zeros_(self.encoder.bias)
+        if bias:
 
-            #decoder weights reuse the encoder's, however decoder has a bias term
+            nn.init.zeros_(self.encoder.bias)
+            #decoder weights reuse the encoder's, however decoder may have a bias term
             self.decoder_bias = nn.Parameter(torch.zeros(1))
+        else:
+            self.register_parameter("decoder_bias", None)
 
         self.stride = stride
         self.padding = padding
@@ -50,9 +52,6 @@ class WeightShareConvFilter(nn.Module):
     def forward(self, x):
 
         h = self.encode(x)
-
-        if self.bias == False:
-            self.decoder_bias =  None
 
 
         # do the transpose convolution but using the encoder weights
