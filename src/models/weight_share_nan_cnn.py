@@ -34,6 +34,7 @@ class WeightShareConvFilter(nn.Module):
 
         self.stride = stride
         self.padding = padding
+        self.bias =bias
 
         #standard activation within convolutional networks is relu
         self.activation = nn.ReLU()
