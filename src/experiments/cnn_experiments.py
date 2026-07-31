@@ -558,7 +558,7 @@ def train_ae_cnn_weight_tied(  data,
     if model.encoder.bias is not None:
         ae_params.append(model.encoder.bias)
 
-    if hasattr(model, "decoder_bias"):
+    if model.decoder_bias is not None:
         ae_params.append(model.decoder_bias)
 
     ae_optimizer = torch.optim.Adam(ae_params, lr=learning_rate)
