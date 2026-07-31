@@ -15,7 +15,8 @@ class ConvFilter(nn.Module):
             out_channels=1,
             kernel_size=kernel_size,
             stride=stride,
-            padding=padding
+            padding=padding,
+            bias = bias
         )
 
         #encoder He initialiasion for pre relu gates 
@@ -34,7 +35,8 @@ class ConvFilter(nn.Module):
             out_channels=1,
             kernel_size=kernel_size,
             stride=stride,
-            padding=padding
+            padding=padding,
+            bias=bias
         )
 
         #xavier is useful for symmetric activations (like sigmoid)
