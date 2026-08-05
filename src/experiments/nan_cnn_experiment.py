@@ -440,6 +440,7 @@ def train_nan_cnn_show_features(  data,
 def train_weight_share_nan_cnn(  data, 
                     input_dims,
                     n_epochs=100, 
+                    dual_lr=False,
                     batch_size=64,
                     learning_rate=0.001,
                     n_filters=16,
@@ -509,18 +510,23 @@ def train_weight_share_nan_cnn(  data,
 
     #classifier loss is cross entropy
     classifier_criterion = torch.nn.CrossEntropyLoss().to(device)
+
+    #when using one singular learning rate for the optimisers
+    if dual_lr == False:
+         ae_lr = learning_rate
+         classifier_lr = learning_rate
   
     # separate optimisers are stored per filter, where each filter's parameters span the encoding and decoding weights and biases
     filter_optimizers = [
         torch.optim.Adam(
             model.filters[j].parameters(),
-            lr=learning_rate
+            lr=ae_lr
         )
         for j in range(n_filters)
     ]
 
     #classifier optimiser only adjusts weights of the fully connected layer
-    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=learning_rate)
+    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=classifier_lr)
 
 
     for epoch in range(n_epochs):
