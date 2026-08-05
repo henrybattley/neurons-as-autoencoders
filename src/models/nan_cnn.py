@@ -26,9 +26,6 @@ class ConvFilter(nn.Module):
                                 nonlinearity="relu"
         )
 
-        if bias == True:
-            nn.init.zeros_(self.encoder.bias)
-
         # decoder, uses transpose convolution to restore input dimensions
         self.decoder = nn.ConvTranspose2d(
             in_channels=1,
@@ -37,16 +34,20 @@ class ConvFilter(nn.Module):
             stride=stride,
             padding=padding,
             bias=bias
-        )
+        )       
 
         #xavier is useful for symmetric activations (like sigmoid)
         nn.init.xavier_normal_(self.decoder.weight)
 
         if bias == True:
+            nn.init.zeros_(self.encoder.bias)
             nn.init.zeros_(self.decoder.bias)
+
 
         #modern standard activation within convolutional networks is relu
         self.activation = nn.ReLU()
+
+        
 
 
     #encode input (used by individual filters)

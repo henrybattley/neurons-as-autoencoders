@@ -3,13 +3,9 @@ import torch.nn as nn  # neural network modules
 import torch.nn.functional as F  # useful stateless functions
 
 """defines each filter (kernel) with the function of encoding and decoding its input"""
-
-""" can BE DELETED AS IS NOW REDUNDANT"""
-
-
 class SimpleWeightShareConvFilter(nn.Module):
     
-    def __init__(self, kernel_size=3,stride=1,padding=1,output_padding=0):
+    def __init__(self, kernel_size=3,stride=1,padding=1,output_padding=0,bias=False,sigmoid=True):
 
         super().__init__()
 
@@ -20,10 +16,9 @@ class SimpleWeightShareConvFilter(nn.Module):
             kernel_size=kernel_size,
             stride=stride,
             padding=padding,
-            bias=False #no encoder bias
+            bias=bias, #False by default
         )
 
-        
         #encoder He initialiasion for pre relu gates 
         nn.init.kaiming_normal_(
                                 self.encoder.weight,
@@ -31,13 +26,18 @@ class SimpleWeightShareConvFilter(nn.Module):
                                 nonlinearity="relu"
         )
 
-        """ 
-        nn.init.xavier_uniform_(self.encoder.weight)
-        """
+        if bias==True:
+
+            nn.init.zeros_(self.encoder.bias)
+            #decoder weights reuse the encoder's, however decoder has a bias term
+            self.decoder_bias = nn.Parameter(torch.zeros(1))
+        else:
+            self.decoder_bias=None
 
         self.stride = stride
         self.padding = padding
         self.output_padding = output_padding
+        self.sigmoid=sigmoid
 
 
         #modern standard activation within convolutional networks is relu
@@ -60,13 +60,16 @@ class SimpleWeightShareConvFilter(nn.Module):
         x_hat = F.conv_transpose2d(
         h,
         weight=self.encoder.weight,
-        bias=None,
+        bias=self.decoder_bias,
         stride=self.stride,
         padding=self.padding,
         output_padding=self.output_padding
     )
 
         #maybe we don't even sigmoid here? to simplify
+        if not self.sigmoid:
+            return x_hat
+
         return torch.sigmoid(x_hat)
 
 
@@ -82,9 +85,9 @@ class FilterCNN(nn.Module):
             padding:int, 
             n_filters:int,
             classes:int, 
-            pool_kernel_size:int, 
-            pool_stride:int,
-            output_padding:int
+            output_padding:int,
+            bias:bool,
+            sigmoid:bool
         ):
         
         super().__init__()
@@ -95,21 +98,21 @@ class FilterCNN(nn.Module):
         self.padding =padding
         self.n_filters = n_filters
         self.classes = classes
-        self.pool_kernel_size=pool_kernel_size
-        self.pool_stride = pool_stride
         self.output_padding =output_padding
+        self.bias =bias
+        self.sigmoid=sigmoid
         
         #define the list of autoencoder filter submodules 
-        self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size=kernel_size,stride=stride,padding=padding,output_padding=output_padding)for _ in range(n_filters)])
+        self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size=kernel_size,stride=stride,padding=padding,output_padding=output_padding,bias=bias,sigmoid=sigmoid)for _ in range(n_filters)])
 
-        self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
+        #self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 
         #only works with square input..
         conv_dim = ((input_dims + 2*padding - kernel_size) // stride) + 1             
 
-        pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1                
+        #pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1                
 
-        self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
+        self.fc = nn.Linear(n_filters * conv_dim * conv_dim, classes)
 
         #xavier init for linear fully connected
         nn.init.xavier_normal_(self.fc.weight)
@@ -127,7 +130,7 @@ class FilterCNN(nn.Module):
 
         feature_maps = [f.encode(x) for f in self.filters]
         features = torch.cat(feature_maps, dim=1)
-        features = self.pool(features)
+        #features = self.pool(features)
         features = features.flatten(1)
         return features
     
