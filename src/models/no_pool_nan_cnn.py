@@ -53,7 +53,7 @@ class ConvFilter(nn.Module):
         #self.stride = stride
         #self.padding = padding
         #self.output_padding = output_padding
-        #self.sigmoid=sigmoid
+        self.sigmoid=sigmoid
 
 
      
