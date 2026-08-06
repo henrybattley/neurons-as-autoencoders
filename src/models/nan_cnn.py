@@ -47,7 +47,7 @@ class ConvFilter(nn.Module):
         #modern standard activation within convolutional networks is relu
         self.activation = nn.ReLU()
 
-        
+
 
 
     #encode input (used by individual filters)
