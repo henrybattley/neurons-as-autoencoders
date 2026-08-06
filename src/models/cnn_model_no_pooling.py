@@ -14,8 +14,6 @@ class CNN(nn.Module):
                  padding, 
                  n_filters, 
                  classes,
-                 pool_kernel_size,
-                 pool_stride,
                  bias=True 
     ):
         super(CNN, self).__init__()
@@ -26,8 +24,6 @@ class CNN(nn.Module):
         self.padding =padding
         self.n_filters = n_filters
         self.classes = classes
-        self.pool_kernel_size=pool_kernel_size
-        self.pool_stride = pool_stride
 
 
         
