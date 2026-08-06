@@ -439,6 +439,7 @@ def train_nan_cnn_show_features(  data,
 
 def train_weight_share_nan_cnn(  data, 
                     input_dims,
+                    in_channels=1,
                     n_epochs=100, 
                     dual_lr=False,
                     batch_size=64,
@@ -496,6 +497,7 @@ def train_weight_share_nan_cnn(  data,
     #defining the FilterCNN model (network of filter autoencoders with classifier head)
     model = weight_share_nan_cnn.FilterCNN(
         input_dims=input_dims,
+        in_channels=in_channels
         kernel_size=kernel_size,
         stride=stride,
         padding=padding,
