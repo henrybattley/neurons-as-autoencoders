@@ -497,7 +497,7 @@ def train_weight_share_nan_cnn(  data,
     #defining the FilterCNN model (network of filter autoencoders with classifier head)
     model = weight_share_nan_cnn.FilterCNN(
         input_dims=input_dims,
-        in_channels=in_channels
+        in_channels=in_channels,
         kernel_size=kernel_size,
         stride=stride,
         padding=padding,
