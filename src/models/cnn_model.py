@@ -16,7 +16,8 @@ class CNN(nn.Module):
                  classes,
                  pool_kernel_size,
                  pool_stride,
-                 bias=True 
+                 bias=True ,
+                 in_channels=1
     ):
         super(CNN, self).__init__()
 
@@ -28,11 +29,12 @@ class CNN(nn.Module):
         self.classes = classes
         self.pool_kernel_size=pool_kernel_size
         self.pool_stride = pool_stride
+        self.in_channels=in_channels
 
 
         
         # 1st conv block (creates n_filters feature mappings)
-        self.conv1 = nn.Conv2d(in_channels=1, 
+        self.conv1 = nn.Conv2d(in_channels=in_channels, 
                                out_channels=n_filters,
                                kernel_size=kernel_size,
                                stride=stride, 

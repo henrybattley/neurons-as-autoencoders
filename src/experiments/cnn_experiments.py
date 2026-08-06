@@ -27,6 +27,7 @@ def train_cnn(  data,
                 kernel_size=3,
                 pool_kernel_size=2,
                 pool_stride=2,
+                in_channels=1,
                 n_classes=10,
                 bias=True,
                 seed=42):
@@ -73,6 +74,7 @@ def train_cnn(  data,
 
     model = cnn_model.CNN(
         input_dims=input_dims,
+        in_channels=in_channels,
         kernel_size=kernel_size,
         stride=stride,
         padding=padding,
