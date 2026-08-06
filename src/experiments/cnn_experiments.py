@@ -288,8 +288,6 @@ def train_no_pool_cnn(  data,
         stride=stride,
         padding=padding,
         n_filters=n_filters,
-        pool_kernel_size=pool_kernel_size,
-        pool_stride=pool_stride,
         classes=n_classes,
         bias=bias
     ).to(device)
