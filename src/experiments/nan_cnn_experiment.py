@@ -1043,6 +1043,7 @@ def train_parallel_schedule_no_pool_weight_share(  data,
                     output_padding=0,
                     n_classes=10,
                     bias=True,
+                    sigmoid=True,
                     seed=42):
     
     training_history = {
@@ -1091,6 +1092,7 @@ def train_parallel_schedule_no_pool_weight_share(  data,
         padding=padding,
         n_filters=n_filters,
         output_padding=output_padding,
+        sigmoid=sigmoid,
         bias=bias,
         classes=n_classes
     ).to(device)
