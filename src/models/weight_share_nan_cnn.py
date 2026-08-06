@@ -60,7 +60,7 @@ class WeightShareConvFilter(nn.Module):
         weight=self.encoder.weight,
         bias=self.decoder_bias,
         stride=self.stride,
-        padding=self.padding,
+        padding=self.padding
     )
 
         return torch.sigmoid(x_hat)

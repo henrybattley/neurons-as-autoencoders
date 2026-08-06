@@ -26,13 +26,11 @@ class SimpleWeightShareConvFilter(nn.Module):
                                 nonlinearity="relu"
         )
 
-        if bias==True:
-
+        if bias:
             nn.init.zeros_(self.encoder.bias)
-            #decoder weights reuse the encoder's, however decoder has a bias term
             self.decoder_bias = nn.Parameter(torch.zeros(1))
         else:
-            self.decoder_bias=None
+            self.register_parameter("decoder_bias", None)
 
         self.stride = stride
         self.padding = padding
