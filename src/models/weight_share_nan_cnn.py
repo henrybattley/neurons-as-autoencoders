@@ -5,13 +5,13 @@ import torch.nn.functional as F  # useful stateless functions
 """defines each filter (kernel) with the function of encoding and decoding its input"""
 class WeightShareConvFilter(nn.Module):
     
-    def __init__(self, kernel_size=3,stride=1,padding=1,bias=True):
+    def __init__(self, kernel_size=3,stride=1,padding=1,bias=True,in_channels=1):
 
         super().__init__()
 
         # encoder 
         self.encoder = nn.Conv2d(
-            in_channels=1,
+            in_channels=in_channels,
             out_channels=1,
             kernel_size=kernel_size,
             stride=stride,
@@ -30,13 +30,15 @@ class WeightShareConvFilter(nn.Module):
 
             nn.init.zeros_(self.encoder.bias)
             #decoder weights reuse the encoder's, however decoder may have a bias term
-            self.decoder_bias = nn.Parameter(torch.zeros(1))
+            #self.decoder_bias = nn.Parameter(torch.zeros(1))
+            self.decoder_bias = nn.Parameter(torch.zeros(in_channels))
         else:
             self.register_parameter("decoder_bias", None)
 
         self.stride = stride
         self.padding = padding
         self.bias =bias
+        self.in_channels=in_channels
 
         #standard activation within convolutional networks is relu
         self.activation = nn.ReLU()
@@ -80,6 +82,7 @@ class FilterCNN(nn.Module):
             classes:int, 
             pool_kernel_size:int, 
             pool_stride:int,
+            in_channels:int,
             bias:bool
         ):
         
@@ -93,10 +96,11 @@ class FilterCNN(nn.Module):
         self.classes = classes
         self.pool_kernel_size=pool_kernel_size
         self.pool_stride = pool_stride
+        self.in_channels = in_channels
         self.bias = bias
         
         #define the list of autoencoder filter submodules 
-        self.filters = nn.ModuleList([WeightShareConvFilter(kernel_size,stride,padding,bias)for _ in range(n_filters)])
+        self.filters = nn.ModuleList([WeightShareConvFilter(kernel_size,stride,padding,bias,in_channels)for _ in range(n_filters)])
 
         self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 
