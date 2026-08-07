@@ -228,6 +228,7 @@ def train_nan_cnn_show_features(  data,
                     pool_kernel_size=2,
                     pool_stride=2,
                     n_classes=10,
+                    bias=True,
                     epochs_to_show=[1],
                     seed=42):
     
@@ -278,6 +279,7 @@ def train_nan_cnn_show_features(  data,
         stride=stride,
         padding=padding,
         n_filters=n_filters,
+        bias=bias,
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
         classes=n_classes
