@@ -9,6 +9,7 @@ torch.backends.cudnn.benchmark = False
 class CNN_AE(nn.Module):
     def __init__(self,
                  input_dims,
+                 in_channels,
                  kernel_size,
                  stride,
                  padding, 
@@ -21,6 +22,7 @@ class CNN_AE(nn.Module):
         super(CNN_AE, self).__init__()
 
         self.input_dims = input_dims
+        self.in_channels=in_channels
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding =padding
@@ -33,7 +35,7 @@ class CNN_AE(nn.Module):
         
         # 1st conv block (creates n_filters feature mappings)
         self.encoder = nn.Conv2d(
-            in_channels=1, 
+            in_channels=in_channels, 
             out_channels=n_filters,
             kernel_size=kernel_size,
             stride=stride, 
@@ -48,7 +50,7 @@ class CNN_AE(nn.Module):
 
         self.decoder = nn.ConvTranspose2d(
             in_channels=n_filters,
-            out_channels=1,
+            out_channels=self.in_channels,
             kernel_size=kernel_size,
             stride=stride,
             padding=padding,
