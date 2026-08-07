@@ -142,3 +142,9 @@ class FilterCNN(nn.Module):
 
     def forward(self, x):
         return self.classify(self.extract_features(x))
+
+
+    # get complete feature maps for visualisation (before pooling)
+    def feature_maps(self, x):
+        maps = [f.encode(x) for f in self.filters]
+        return torch.cat(maps, dim=1)
