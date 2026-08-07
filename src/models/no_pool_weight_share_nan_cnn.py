@@ -5,13 +5,13 @@ import torch.nn.functional as F  # useful stateless functions
 """defines each filter (kernel) with the function of encoding and decoding its input"""
 class SimpleWeightShareConvFilter(nn.Module):
     
-    def __init__(self, kernel_size=3,stride=1,padding=1,output_padding=0,bias=False,sigmoid=True):
+    def __init__(self, kernel_size=3,stride=1,padding=1,output_padding=0,bias=False,sigmoid=True,in_channels=1):
 
         super().__init__()
 
         # encoder 
         self.encoder = nn.Conv2d(
-            in_channels=1,
+            in_channels=in_channels,
             out_channels=1,
             kernel_size=kernel_size,
             stride=stride,
@@ -36,6 +36,7 @@ class SimpleWeightShareConvFilter(nn.Module):
         self.padding = padding
         self.output_padding = output_padding
         self.sigmoid=sigmoid
+        self.in_channels=in_channels
 
 
         #modern standard activation within convolutional networks is relu
@@ -84,6 +85,7 @@ class FilterCNN(nn.Module):
             n_filters:int,
             classes:int, 
             output_padding:int,
+            in_channels:int,
             bias:bool,
             sigmoid:bool
         ):
@@ -91,6 +93,7 @@ class FilterCNN(nn.Module):
         super().__init__()
 
         self.input_dims = input_dims
+        self.in_channels=in_channels
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding =padding
@@ -101,7 +104,7 @@ class FilterCNN(nn.Module):
         self.sigmoid=sigmoid
         
         #define the list of autoencoder filter submodules 
-        self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size=kernel_size,stride=stride,padding=padding,output_padding=output_padding,bias=bias,sigmoid=sigmoid)for _ in range(n_filters)])
+        self.filters = nn.ModuleList([SimpleWeightShareConvFilter(kernel_size=kernel_size,stride=stride,padding=padding,output_padding=output_padding,bias=bias,sigmoid=sigmoid,in_channels=in_channels)for _ in range(n_filters)])
 
         #self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
 

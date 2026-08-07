@@ -1259,6 +1259,7 @@ def train_linear_schedule_no_pool_weight_share_nan_cnn(  data,
 
 def train_parallel_schedule_no_pool_weight_share(  data, 
                     input_dims,
+                    in_channels=1,
                     n_epochs=100, 
                     dual_lr=False,
                     batch_size=64,
@@ -1316,6 +1317,7 @@ def train_parallel_schedule_no_pool_weight_share(  data,
     #defining the FilterCNN model (network of filter autoencoders with classifier head)
     model = no_pool_weight_share_nan_cnn.FilterCNN(
         input_dims=input_dims,
+        in_channels=in_channels,
         kernel_size=kernel_size,
         stride=stride,
         padding=padding,
