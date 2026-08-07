@@ -474,6 +474,7 @@ def train_ae_cnn(  data,
 
 def train_ae_cnn_weight_tied(  data, 
                 input_dims,
+                in_channels=1,
                 n_epochs=100, 
                 batch_size=64,
                 learning_rate=0.001,
@@ -485,7 +486,6 @@ def train_ae_cnn_weight_tied(  data,
                 pool_stride=2,
                 n_classes=10,
                 bias=True,
-                epochs_to_show=[1],
                 seed=42):
     
 
@@ -534,6 +534,7 @@ def train_ae_cnn_weight_tied(  data,
 
     model = weight_tied_conv_autoencoder.CNN_AE(
         input_dims=input_dims,
+        in_channels=in_channels,
         kernel_size=kernel_size,
         stride=stride,
         padding=padding,
