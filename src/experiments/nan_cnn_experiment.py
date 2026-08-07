@@ -757,11 +757,6 @@ def train_nan_cnn_weight_share_show_features(  data,
                     for f in model.filters
                 ])
 
-                #decoder weights 
-                decoder_weights = torch.stack([
-                f.decoder.weight.squeeze().cpu().clone()
-                for f in model.filters
-            ])
                 #make the prediction
                 logits = model(probe_image)
                 prediction = logits.argmax(1).item()
@@ -774,8 +769,7 @@ def train_nan_cnn_weight_share_show_features(  data,
                     "maps": maps.cpu().clone(),
                     "pooled_maps": pooled_maps.cpu().clone(),
                     "reconstructions": recons.cpu().clone(),
-                    "encoder_weights": weights.cpu(),
-                    "decoder_weights": decoder_weights.cpu()
+                    "encoder_weights": weights.cpu()
 
                 }
 
