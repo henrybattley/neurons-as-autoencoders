@@ -101,7 +101,6 @@ class CNN_AE(nn.Module):
             padding=self.padding
         )
 
-        h1_hat = self.activation(h1_hat)
 
         # inverse of encoder layer 1
         x_hat = F.conv_transpose2d(
