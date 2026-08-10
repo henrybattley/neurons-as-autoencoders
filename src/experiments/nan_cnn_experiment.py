@@ -11,8 +11,6 @@ from src.models import weight_share_nan_cnn
 from src.models import no_pool_weight_share_nan_cnn
 from src.models import no_pool_nan_cnn
 
-from src.models import crelu_nan_cnn
-
 from src.models import noisy_nan_cnn
 from src.models import sparse_nan_cnn
 
@@ -1052,8 +1050,6 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
     elapsed = time.perf_counter() - start
 
     return model, training_history, elapsed
-
-
 
 
 
