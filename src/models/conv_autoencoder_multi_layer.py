@@ -52,6 +52,8 @@ class CNN_AE(nn.Module):
             padding=padding,
             bias=bias)
 
+        nn.init.kaiming_normal_(self.encoder_layer_2.weight)
+
 
         if bias:
 
@@ -87,17 +89,29 @@ class CNN_AE(nn.Module):
         #calls encode and decode the latent feature representation (used by individual filters)
     def autoencode(self, x):
 
-        h = self.encode(x)
+        h1 = self.activation(self.encoder(x))
+        h2 = self.activation(self.encoder_layer_2(h1))
 
-        # do the transpose convolution but using the encoder weights
+        # inverse of encoder layer 2
+        h1_hat = F.conv_transpose2d(
+            h2,
+            weight=self.encoder_layer_2.weight,
+            bias=None,
+            stride=self.stride,
+            padding=self.padding
+        )
+
+        h1_hat = self.activation(h1_hat)
+
+        # inverse of encoder layer 1
         x_hat = F.conv_transpose2d(
-        h,
-        weight=self.encoder.weight,
-        bias=self.decoder_bias,
-        stride=self.stride,
-        padding=self.padding,
-        output_padding=self.output_padding
-    )
+            h1_hat,
+            weight=self.encoder.weight,
+            bias=self.decoder_bias,
+            stride=self.stride,
+            padding=self.padding,
+            output_padding=self.output_padding
+        )
 
         return torch.sigmoid(x_hat)
 

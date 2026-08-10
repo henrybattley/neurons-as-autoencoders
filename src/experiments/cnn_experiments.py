@@ -10,6 +10,8 @@ from src.models import weight_tied_conv_autoencoder
 from src.models import no_pool_weight_tied_conv_autoencoder
 from src.models import conv_classifier_weight_tied_conv_autoencoder
 from src.models import two_layer_cnn
+from src.models import conv_autoencoder_multi_layer
+
 
 
 
@@ -1420,6 +1422,165 @@ def train_two_layer_cnn(  data,
 
     elapsed = time.perf_counter() - start
     return model, training_history,elapsed
+
+
+
+"""no pooling """
+def train_conv_multi_layer_encoder_weight_tied(  data, 
+                input_dims,
+                in_channels=1,
+                n_epochs=100, 
+                batch_size=64,
+                learning_rate=0.001,
+                n_filters=16,
+                stride=1,
+                padding=1,
+                output_padding=0,
+                kernel_size=3,
+                n_classes=10,
+                bias=True,
+                seed=42):
+    
+
+    training_history = {
+    "task_train_loss": [],
+    "train_accuracy":[],
+    "encoder_train_loss": [],
+    }
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"device is: {device}")
+
+    #seed randomness 
+    random.seed(seed)
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    torch.use_deterministic_algorithms(True)
+
+    g = torch.Generator()
+    g.manual_seed(seed)
+
+    #starting time from data loading
+    start = time.perf_counter()
+
+    train_loader = torch.utils.data.DataLoader(
+    data,
+    batch_size=batch_size,
+    shuffle=True,
+    generator=g,
+    num_workers=0,  
+    pin_memory=True,
+    )
+
+
+    model = conv_autoencoder_multi_layer.CNN_AE(
+        input_dims=input_dims,
+        in_channels=in_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        output_padding=output_padding,
+        n_filters=n_filters,
+        classes=n_classes,
+        bias=bias
+    ).to(device)
+
+
+    encoder_criterion = torch.nn.MSELoss()
+    encoder_criterion.to(device)
+
+    task_criterion = torch.nn.CrossEntropyLoss()
+    task_criterion.to(device)
+
+
+    ae_params = [model.encoder.weight]
+
+    if model.encoder.bias is not None:
+        ae_params.append(model.encoder.bias)
+
+    if model.decoder_bias is not None:
+        ae_params.append(model.decoder_bias)
+
+    ae_optimizer = torch.optim.Adam(ae_params, lr=learning_rate)
+
+
+    classifier_optimizer = torch.optim.Adam(model.fc.parameters(), lr=learning_rate)
+
+
+    # Training loop..
+    for epoch in range(n_epochs):
+
+            
+        #train_loss,accuracy = global_backprop.train(model, train_loader, criterion, optimizer, device)
+
+        model.train()
+
+        encoder_epoch_loss=0.0
+        task_epoch_loss = 0.0
+
+        correct = 0
+        total_samples = 0
+
+        for inputs, labels in train_loader:
+            inputs = inputs.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
+
+            ae_optimizer.zero_grad()
+
+            x_hat = model.autoencode(inputs)
+            encoder_loss = encoder_criterion(x_hat,inputs)
+
+            encoder_loss.backward()
+            ae_optimizer.step()
+
+            encoder_epoch_loss+=encoder_loss.item()
+
+            #now train the classifier
+
+            classifier_optimizer.zero_grad()
+            
+            with torch.no_grad():
+
+                features = model.encode(inputs)
+
+            task_outputs = model.classify(features)
+
+            task_loss = task_criterion(task_outputs, labels)
+            task_loss.backward()
+            classifier_optimizer.step()
+
+            task_epoch_loss += task_loss.item()
+
+            _, predicted = torch.max(task_outputs, 1)
+            correct += (predicted == labels).sum()
+            total_samples += labels.size(0)
+
+        avg_encoder_loss = encoder_epoch_loss / len(train_loader)
+        #scale encoder loss to be the same as our filters as autoencoders method?
+        #avg_encoder_loss /= n_filters
+
+        avg_task_loss = task_epoch_loss/ len(train_loader)
+        accuracy = 100 * correct.item() / total_samples
+
+
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Encoder Loss: {avg_encoder_loss:.4f}")
+        training_history["encoder_train_loss"].append(avg_encoder_loss)
+
+
+        print(f"Epoch [{epoch + 1}/{n_epochs}], Training Loss: {avg_task_loss:.4f}, Training Accuracy: {accuracy:.2f}")
+        training_history["task_train_loss"].append(avg_task_loss)
+        training_history["train_accuracy"].append(accuracy)
+
+
+    elapsed = time.perf_counter() - start
+    return model, training_history, elapsed
 
 
 
