@@ -92,9 +92,6 @@ class CNN_AE(nn.Module):
         #output_padding=self.output_padding
     )
 
-        #experiment with different activation here-- perhaps no sigmoid
-        #x_hat = torch.sigmoid(self.decoder(h))
-
         return torch.sigmoid(x_hat)
 
 

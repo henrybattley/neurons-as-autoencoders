@@ -44,10 +44,20 @@ class CNN_AE(nn.Module):
         #He initialisation pre relu activation
         nn.init.kaiming_normal_(self.encoder.weight)
 
+        self.encoder_layer_2 =  nn.Conv2d(
+            in_channels=n_filters, 
+            out_channels=n_filters,
+            kernel_size=kernel_size,
+            stride=stride, 
+            padding=padding,
+            bias=bias)
+
 
         if bias:
 
             nn.init.zeros_(self.encoder.bias)
+            nn.init.zeros_(self.encoder_layer_2.bias)
+
             self.decoder_bias = nn.Parameter(torch.zeros(1))
         else:
             self.register_parameter("decoder_bias", None)
@@ -70,8 +80,9 @@ class CNN_AE(nn.Module):
     def encode(self,x):
 
         h = self.activation(self.encoder(x))
+        h2 = self.activation(self.encoder_layer_2(h))
 
-        return h
+        return h2
 
         #calls encode and decode the latent feature representation (used by individual filters)
     def autoencode(self, x):
