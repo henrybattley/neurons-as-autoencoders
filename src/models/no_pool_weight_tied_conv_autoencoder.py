@@ -95,12 +95,12 @@ class CNN_AE(nn.Module):
 
     def classify(self, h):
 
-        h_pool = self.pool(h)
+        #h_pool = self.pool(h)
 
         #flatten here
-        h_pool_flat = torch.flatten(h_pool, 1)
+        h_flat = torch.flatten(h, 1)
 
-        pred = self.fc(h_pool_flat)
+        pred = self.fc(h_flat)
         return pred
 
 
