@@ -855,6 +855,7 @@ def train_nan_cnn_weight_share_show_features(  data,
 -----------------------------------------------------------------"""
 def train_linear_schedule_weight_share_nan_cnn(  data, 
                     input_dims,
+                    in_channels=1,
                     n_epochs=100, 
                     batch_size=64,
                     learning_rate=0.001,
@@ -910,6 +911,7 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
     #defining the FilterCNN model (network of filter autoencoders with classifier head)
     model = weight_share_nan_cnn.FilterCNN(
         input_dims=input_dims,
+        in_channels=in_channels,
         kernel_size=kernel_size,
         stride=stride,
         padding=padding,
@@ -1057,6 +1059,7 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
 
 def train_linear_schedule_no_pool_weight_share_nan_cnn(  data, 
                     input_dims,
+                    in_channels=1,
                     n_epochs=100, 
                     batch_size=64,
                     learning_rate=0.001,
@@ -1112,6 +1115,7 @@ def train_linear_schedule_no_pool_weight_share_nan_cnn(  data,
     #defining the FilterCNN model (network of filter autoencoders with classifier head)
     model = no_pool_weight_share_nan_cnn.FilterCNN(
         input_dims=input_dims,
+        in_channels=in_channels,
         kernel_size=kernel_size,
         stride=stride,
         padding=padding,
