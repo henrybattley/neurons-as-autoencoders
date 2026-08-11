@@ -3413,6 +3413,7 @@ def train_nan_cnn_diverse_activations_show_features_localised(  data,
                     pool_kernel_size=2,
                     pool_stride=2,
                     n_classes=10,
+                    bias=True,
                     epochs_to_show=[1],
                     lambda_cosine=0.2,
                     seed=42):
@@ -3468,6 +3469,7 @@ def train_nan_cnn_diverse_activations_show_features_localised(  data,
         n_filters=n_filters,
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
+        bias=bias,
         classes=n_classes
     ).to(device)
 
