@@ -1185,6 +1185,171 @@ def train_no_pool_ae_cnn_weight_tied(  data,
     return model, training_history, elapsed
 
 
+
+def train_linear_no_pool_ae_cnn_weight_tied(  data, 
+                input_dims,
+                in_channels=1,
+                n_ae_epochs=100, 
+                n_classifier_epochs=100, 
+                batch_size=64,
+                learning_rate=0.001,
+                n_filters=16,
+                stride=1,
+                padding=1,
+                output_padding=0,
+                kernel_size=3,
+                n_classes=10,
+                bias=True,
+                seed=42):
+    
+
+    training_history = {
+    "task_train_loss": [],
+    "train_accuracy":[],
+    "encoder_train_loss": [],
+    }
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"device is: {device}")
+
+    #seed randomness 
+    random.seed(seed)
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    torch.use_deterministic_algorithms(True)
+
+    g = torch.Generator()
+    g.manual_seed(seed)
+
+    #starting time from data loading
+    start = time.perf_counter()
+
+    train_loader = torch.utils.data.DataLoader(
+    data,
+    batch_size=batch_size,
+    shuffle=True,
+    generator=g,
+    num_workers=0,  
+    pin_memory=True,
+    )
+
+
+    model = no_pool_weight_tied_conv_autoencoder.CNN_AE(
+        input_dims=input_dims,
+        in_channels=in_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        output_padding=output_padding,
+        n_filters=n_filters,
+        classes=n_classes,
+        bias=bias
+    ).to(device)
+
+
+    encoder_criterion = torch.nn.MSELoss()
+    encoder_criterion.to(device)
+
+    task_criterion = torch.nn.CrossEntropyLoss()
+    task_criterion.to(device)
+
+
+    ae_params = [model.encoder.weight]
+
+    if model.encoder.bias is not None:
+        ae_params.append(model.encoder.bias)
+
+    if model.decoder_bias is not None:
+        ae_params.append(model.decoder_bias)
+
+    ae_optimizer = torch.optim.Adam(ae_params, lr=learning_rate)
+
+
+    classifier_optimizer = torch.optim.Adam(model.fc.parameters(), lr=learning_rate)
+
+
+    # Training loop..
+    for epoch in range(n_ae_epochs):
+
+        model.train()
+
+        encoder_epoch_loss=0.0
+
+        for inputs, _ in train_loader:
+            inputs = inputs.to(device, non_blocking=True)
+
+            ae_optimizer.zero_grad()
+
+            x_hat = model.autoencode(inputs)
+            encoder_loss = encoder_criterion(x_hat,inputs)
+
+            encoder_loss.backward()
+            ae_optimizer.step()
+
+            encoder_epoch_loss+=encoder_loss.item()
+
+            
+        avg_encoder_loss = encoder_epoch_loss / len(train_loader)
+
+        print(f"Epoch [{epoch + 1}/{n_ae_epochs}], Encoder Loss: {avg_encoder_loss:.4f}")
+        training_history["encoder_train_loss"].append(avg_encoder_loss)
+
+
+
+    for epoch in range(n_classifier_epochs):
+
+        model.train()
+
+        task_epoch_loss = 0.0
+        correct = 0
+        total_samples = 0
+
+        for inputs, labels in train_loader:
+
+            inputs = inputs.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
+        
+            classifier_optimizer.zero_grad()
+
+            with torch.no_grad():
+            
+                features = model.encode(inputs)
+            
+            task_outputs = model.classify(features)
+            
+            task_loss = task_criterion(task_outputs, labels)
+            task_loss.backward()
+            classifier_optimizer.step()
+            
+            task_epoch_loss += task_loss.item()
+            
+            _, predicted = torch.max(task_outputs, 1)
+            correct += (predicted == labels).sum()
+            total_samples += labels.size(0)
+
+        avg_task_loss = task_epoch_loss/ len(train_loader)
+        accuracy = 100 * correct.item() / total_samples
+
+
+        print(f"Epoch [{epoch + 1}/{n_classifier_epochs}], Training Loss: {avg_task_loss:.4f}, Training Accuracy: {accuracy:.2f}")
+
+        training_history["task_train_loss"].append(avg_task_loss)
+        training_history["train_accuracy"].append(accuracy)
+
+
+    elapsed = time.perf_counter() - start
+    return model, training_history, elapsed
+
+
+
+
 """no pooling """
 def train_conv_classif_ae_cnn_weight_tied(  data, 
                 input_dims,
