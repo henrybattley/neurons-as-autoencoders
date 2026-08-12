@@ -111,6 +111,7 @@ def train_cnn(  data,
 
 def train_cnn_get_features(  data, 
                 input_dims,
+                in_channels=1,
                 n_epochs=100, 
                 batch_size=64,
                 learning_rate=0.001,
@@ -169,6 +170,7 @@ def train_cnn_get_features(  data,
 
     model = cnn_model.CNN(
         input_dims=input_dims,
+        in_channels=in_channels,
         kernel_size=kernel_size,
         stride=stride,
         padding=padding,
