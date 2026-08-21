@@ -655,6 +655,11 @@ def train_niave_linear_weight_share_nan_cnn(
     "task_train_loss": [],
     "train_accuracy": []
     }
+
+    test_history = {
+    "task_train_loss": [],
+    "train_accuracy": []
+    }
     
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -726,6 +731,9 @@ def train_niave_linear_weight_share_nan_cnn(
          ae_lr = learning_rate
          classifier_lr = learning_rate
   
+
+    print("Training AE...")
+
     # separate optimisers are stored per filter, where each filter's parameters span the encoding and decoding weights and biases
     filter_optimizers = [
         torch.optim.Adam(
@@ -735,10 +743,7 @@ def train_niave_linear_weight_share_nan_cnn(
         for j in range(n_filters)
     ]
 
-    #classifier optimiser only adjusts weights of the fully connected layer
-    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=classifier_lr)
 
-    print("Training AE...")
     for epoch in range(n_ae_epochs):
 
         encoder_epoch_loss =0.0
@@ -748,7 +753,6 @@ def train_niave_linear_weight_share_nan_cnn(
 
             images = images.to(device)
             
-
             # each filter encodes and decodes their input (would be performed in parallel on specialised hardware)
             for j in range(n_filters):
                 
@@ -776,13 +780,26 @@ def train_niave_linear_weight_share_nan_cnn(
         training_history["encoder_train_loss"].append(avg_encoder_loss)
 
 
-    print("Training classifier...")            
+    print("Training classifier...")   
+
+
+    #classifier optimiser only adjusts weights of the fully connected layer
+    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=classifier_lr)
+
+    #just be sure that we are not accumulating grads of the filter nodes
+    for filter_module in model.filters:
+        for param in filter_module.parameters():
+            param.requires_grad = False         
 
     for epoch in range(n_classifier_epochs):
         classifier_epoch_loss =0.0
+        test_running_loss=0.0
 
         correct = 0
         total = 0
+
+        test_correct = 0
+        test_total = 0
         #per batch
         for images,labels in train_loader:
 
@@ -811,22 +828,55 @@ def train_niave_linear_weight_share_nan_cnn(
             total += labels.size(0)
 
         
-
         #for average classification loss, divide by the batch size and then form accuracy as percentage
         avg_classifier_loss = classifier_epoch_loss / len(train_loader)
         classification_accuracy = 100.0 * correct / total
 
 
-        print(f"Epoch [{epoch + 1}/{n_classifier_epochs}], Task Training Loss: {avg_classifier_loss:.4f}, Accuracy: {classification_accuracy:.2f}%")
+
+        with torch.no_grad():
+
+            for images, labels in test_loader:
+
+                images = images.to(device)
+   
+                labels = labels.to(device)
+
+                
+                features = model.extract_features(images)
+
+                logits = model.classify(features)
+                            
+                loss = classifier_criterion(logits, labels)
+
+                test_running_loss += loss.item()
+
+                # Classification accuracy
+                predictions = torch.argmax(logits, dim=1)
+                test_correct += (predictions == labels).sum().item()
+                test_total += labels.size(0)
+
+
+        avg_test_loss = test_running_loss / len(test_loader)
+        test_accuracy = 100 * test_correct / test_total
+
+
+        print(f"Epoch [{epoch + 1}/{n_classifier_epochs}], Task Training Loss: {avg_classifier_loss:.4f}, Accuracy: {classification_accuracy:.2f}, Task Test Loss: {avg_test_loss}, Task  Accuracy: {test_accuracy}%")
 
         training_history["task_train_loss"].append(avg_classifier_loss)
         
         training_history["train_accuracy"].append(classification_accuracy)
+
+        test_history["task_train_loss"].append(avg_test_loss)
+
+        test_history["train_accuracy"].append(test_accuracy)
+
+
         
         
     elapsed = time.perf_counter() - start
 
-    return model, training_history, elapsed
+    return model, training_history, test_history, elapsed
 
 
 #now make the same function but use the adaptive lr scheduler defined within the hebb methods
