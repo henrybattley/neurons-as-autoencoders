@@ -861,7 +861,7 @@ def train_niave_linear_weight_share_nan_cnn(
         test_accuracy = 100 * test_correct / test_total
 
 
-        print(f"Epoch [{epoch + 1}/{n_classifier_epochs}], Task Training Loss: {avg_classifier_loss:.4f}, Accuracy: {classification_accuracy:.2f}, Task Test Loss: {avg_test_loss}, Task  Accuracy: {test_accuracy}%")
+        print(f"Epoch [{epoch + 1}/{n_classifier_epochs}], Task Training Loss: {avg_classifier_loss:.4f}, Accuracy: {classification_accuracy:.2f}, Task Test Loss: {avg_test_loss}, Task Test Accuracy: {test_accuracy}%")
 
         training_history["task_train_loss"].append(avg_classifier_loss)
         
