@@ -776,6 +776,12 @@ def train_niave_linear_weight_share_nan_cnn(
         avg_encoder_loss /= n_filters
 
         print(f"Epoch [{epoch + 1}/{n_ae_epochs}], Encoder Training Loss: {avg_encoder_loss:.4f}")
+        print(
+            f"epoch {epoch+1}: "
+            f"allocated={torch.cuda.memory_allocated()/1024**2:.1f} MB, "
+            f"reserved={torch.cuda.memory_reserved()/1024**2:.1f} MB, "
+            f"peak={torch.cuda.max_memory_allocated()/1024**2:.1f} MB"
+        )
 
         training_history["encoder_train_loss"].append(avg_encoder_loss)
 
