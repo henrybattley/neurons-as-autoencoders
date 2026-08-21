@@ -776,12 +776,13 @@ def train_niave_linear_weight_share_nan_cnn(
         avg_encoder_loss /= n_filters
 
         print(f"Epoch [{epoch + 1}/{n_ae_epochs}], Encoder Training Loss: {avg_encoder_loss:.4f}")
-        print(
+
+        """useful to see memory stats print(
             f"epoch {epoch+1}: "
             f"allocated={torch.cuda.memory_allocated()/1024**2:.1f} MB, "
             f"reserved={torch.cuda.memory_reserved()/1024**2:.1f} MB, "
             f"peak={torch.cuda.max_memory_allocated()/1024**2:.1f} MB"
-        )
+        ) """ 
 
         training_history["encoder_train_loss"].append(avg_encoder_loss)
 
@@ -868,12 +869,12 @@ def train_niave_linear_weight_share_nan_cnn(
 
 
         print(f"Epoch [{epoch + 1}/{n_classifier_epochs}], Task Training Loss: {avg_classifier_loss:.4f}, Accuracy: {classification_accuracy:.2f}, Task Test Loss: {avg_test_loss}, Task Test Accuracy: {test_accuracy}%")
-        print(
+        """print(
                 f"epoch {epoch+1}: "
                 f"allocated={torch.cuda.memory_allocated()/1024**2:.1f} MB, "
                 f"reserved={torch.cuda.memory_reserved()/1024**2:.1f} MB, "
                 f"peak={torch.cuda.max_memory_allocated()/1024**2:.1f} MB"
-            )
+            )"""
 
         training_history["task_train_loss"].append(avg_classifier_loss)
         
