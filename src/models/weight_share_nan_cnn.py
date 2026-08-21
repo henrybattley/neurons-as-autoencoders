@@ -82,6 +82,8 @@ class FilterCNN(nn.Module):
             classes:int, 
             pool_kernel_size:int, 
             pool_stride:int,
+            pool_padding:int,
+
             in_channels:int,
             bias:bool
         ):
@@ -95,6 +97,7 @@ class FilterCNN(nn.Module):
         self.n_filters = n_filters
         self.classes = classes
         self.pool_kernel_size=pool_kernel_size
+        self.pool_padding = pool_padding
         self.pool_stride = pool_stride
         self.in_channels = in_channels
         self.bias = bias
@@ -102,12 +105,12 @@ class FilterCNN(nn.Module):
         #define the list of autoencoder filter submodules 
         self.filters = nn.ModuleList([WeightShareConvFilter(kernel_size,stride,padding,bias,in_channels)for _ in range(n_filters)])
 
-        self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride)
+        self.pool = nn.MaxPool2d(pool_kernel_size,pool_stride,pool_padding)
 
         #only works with square input..
         conv_dim = ((input_dims + 2*padding - kernel_size) // stride) + 1             
 
-        pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1                
+        pool_dim = ((conv_dim + 2*pool_padding - pool_kernel_size) // pool_stride) + 1                
 
 
         self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
