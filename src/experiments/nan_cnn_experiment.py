@@ -782,14 +782,14 @@ def train_niave_linear_weight_share_nan_cnn(
 
     print("Training classifier...")   
 
-
-    #classifier optimiser only adjusts weights of the fully connected layer
-    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=classifier_lr)
-
     #just be sure that we are not accumulating grads of the filter nodes
     for filter_module in model.filters:
         for param in filter_module.parameters():
             param.requires_grad = False         
+
+    #classifier optimiser only adjusts weights of the fully connected layer
+    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=classifier_lr)
+
 
     for epoch in range(n_classifier_epochs):
         classifier_epoch_loss =0.0
@@ -862,6 +862,12 @@ def train_niave_linear_weight_share_nan_cnn(
 
 
         print(f"Epoch [{epoch + 1}/{n_classifier_epochs}], Task Training Loss: {avg_classifier_loss:.4f}, Accuracy: {classification_accuracy:.2f}, Task Test Loss: {avg_test_loss}, Task Test Accuracy: {test_accuracy}%")
+        print(
+                f"epoch {epoch+1}: "
+                f"allocated={torch.cuda.memory_allocated()/1024**2:.1f} MB, "
+                f"reserved={torch.cuda.memory_reserved()/1024**2:.1f} MB, "
+                f"peak={torch.cuda.max_memory_allocated()/1024**2:.1f} MB"
+            )
 
         training_history["task_train_loss"].append(avg_classifier_loss)
         
