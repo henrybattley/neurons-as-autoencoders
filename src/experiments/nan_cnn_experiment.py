@@ -1039,8 +1039,9 @@ def train_niave_linear_weight_share_nan_cnn(
         for param in filter_module.parameters():
             param.requires_grad = False         
 
-    #classifier optimiser only adjusts weights of the fully connected layer
-    classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=classifier_lr)
+    else:
+        #classifier optimiser only adjusts weights of the fully connected layer
+        classifier_optimizer = torch.optim.Adam(model.fc.parameters(),lr=classifier_lr)
 
 
     for epoch in range(n_classifier_epochs):
@@ -1138,6 +1139,298 @@ def train_niave_linear_weight_share_nan_cnn(
 
 
 #now make the same function but use the adaptive lr scheduler defined within the hebb methods
+
+def train_annealing_linear_weight_share_nan_cnn(  
+                    train_data, 
+                    test_data,
+                    input_dims,
+                    seed_worker,
+                    in_channels=1,
+                    n_ae_epochs=100, 
+                    n_classifier_epochs=30, 
+                    dual_lr=False,
+                    batch_size=64,
+                    learning_rate=0.001,      
+                    classifier_lr=0.001,
+                    ae_lr=0.001,
+                    n_filters=16,
+                    stride=1,
+                    padding=1,
+                    kernel_size=3,
+                    pool_kernel_size=2,
+                    pool_stride=1,
+
+                    pool_padding =0,
+
+                    n_classes=10,
+                    bias=True,
+                    seed=42):
+    
+    training_history = {
+    "encoder_train_loss": [],
+    "task_train_loss": [],
+    "train_accuracy": []
+    }
+
+    test_history = {
+    "task_train_loss": [],
+    "train_accuracy": []
+    }
+    
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"device is: {device}")
+
+    #seed randomness (akin to the set_seed() function within the hebbian experiment)
+    random.seed(seed)
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    torch.use_deterministic_algorithms(True)
+
+    g = torch.Generator()
+    g.manual_seed(seed)
+
+    #starting time from data loading
+    start = time.perf_counter()
+
+    train_loader = torch.utils.data.DataLoader(
+    train_data,
+    batch_size=batch_size,
+    shuffle=True,
+    generator=g,
+    num_workers=2,
+    worker_init_fn=seed_worker,  
+    pin_memory=True,
+    )
+
+    test_loader = torch.utils.data.DataLoader(
+    test_data,
+    batch_size=batch_size,
+    shuffle=False,
+    generator=g,
+    num_workers=2,
+    worker_init_fn=seed_worker,  
+    pin_memory=True,
+    )
+
+
+    #defining the FilterCNN model (network of filter autoencoders with classifier head)
+    model = weight_share_nan_cnn.FilterCNN(
+        input_dims=input_dims,
+        in_channels=in_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        n_filters=n_filters,
+
+        pool_kernel_size=pool_kernel_size,
+        pool_stride=pool_stride,
+
+        #added the padding for pooling to be consistent with the hebbian architecture comparison
+        pool_padding=pool_padding,
+
+        bias=bias,
+        classes=n_classes
+    ).to(device)
+    
+
+    #autoencoding loss is MSE of reconstruction vs input
+    encoder_criterion = torch.nn.MSELoss().to(device)
+
+    #classifier loss is cross entropy
+    classifier_criterion = torch.nn.CrossEntropyLoss().to(device)
+
+    #when using one singular learning rate for the optimisers
+    if dual_lr == False:
+         ae_lr = learning_rate
+         classifier_lr = learning_rate
+  
+
+    print("Training AE...")
+
+    # separate optimisers are stored per filter, where each filter's parameters span the encoding and decoding weights and biases
+    filter_optimizers = [
+        torch.optim.Adam(
+            model.filters[j].parameters(),
+            lr=ae_lr
+        )
+        for j in range(n_filters)
+    ]
+
+
+    for epoch in range(n_ae_epochs):
+
+        encoder_epoch_loss =0.0
+
+        #per batch
+        for images, _ in train_loader:
+
+            images = images.to(device)
+            
+            # each filter encodes and decodes their input (would be performed in parallel on specialised hardware)
+            for j in range(n_filters):
+                
+                #get the optimiser associeted with filter
+                optimizer = filter_optimizers[j]
+
+                optimizer.zero_grad()
+
+                x_hat = model.reconstruct(images, j)
+
+                loss = encoder_criterion(x_hat, images)
+
+                loss.backward()
+
+                optimizer.step()
+
+                encoder_epoch_loss += loss.item()
+
+        #for average autoencoder loss, divide by the batch size and then the n filters
+        avg_encoder_loss = encoder_epoch_loss / len(train_loader)
+        avg_encoder_loss /= n_filters
+
+        print(f"Epoch [{epoch + 1}/{n_ae_epochs}], Encoder Training Loss: {avg_encoder_loss:.4f}")
+
+        """useful to see memory stats print(
+            f"epoch {epoch+1}: "
+            f"allocated={torch.cuda.memory_allocated()/1024**2:.1f} MB, "
+            f"reserved={torch.cuda.memory_reserved()/1024**2:.1f} MB, "
+            f"peak={torch.cuda.max_memory_allocated()/1024**2:.1f} MB"
+        ) """ 
+
+        training_history["encoder_train_loss"].append(avg_encoder_loss)
+
+
+    print("Training classifier...")   
+
+    #just be sure that we are not accumulating grads of the filter nodes
+    for filter_module in model.filters:
+        for param in filter_module.parameters():
+            param.requires_grad = False         
+
+
+    #optimiser and schedular as defined in experiment_hebbian.py
+    sup_optimizer = torch.optim.Adam(
+        model.fc1.parameters(),
+        lr=0.001
+        )
+
+    scheduler = torch.optim.lr_scheduler.LambdaLR(
+        sup_optimizer,
+        lr_lambda=lambda epoch:
+            0.5 ** max(0, (epoch - 10) // 2)
+        )
+
+
+    for epoch in range(n_classifier_epochs):
+        classifier_epoch_loss =0.0
+        test_running_loss=0.0
+
+        correct = 0
+        total = 0
+
+        test_correct = 0
+        test_total = 0
+        #per batch
+        for images,labels in train_loader:
+
+            images = images.to(device)
+            labels = labels.to(device)
+
+   
+            #classifier_optimizer.zero_grad()
+            sup_optimizer.zero_grad()
+
+            with torch.no_grad():
+                features = model.extract_features(images)
+
+            logits = model.classify(features)
+            
+            loss = classifier_criterion(logits, labels)
+
+            loss.backward()
+
+            #classifier_optimizer.step()
+
+            sup_optimizer.step()
+
+            classifier_epoch_loss += loss.item()
+
+            # Classification accuracy
+            predictions = torch.argmax(logits, dim=1)
+            correct += (predictions == labels).sum().item()
+            total += labels.size(0)
+
+        
+        #for average classification loss, divide by the batch size and then form accuracy as percentage
+        avg_classifier_loss = classifier_epoch_loss / len(train_loader)
+        classification_accuracy = 100.0 * correct / total
+
+
+        #model.eval()
+
+        with torch.no_grad():
+
+            for images, labels in test_loader:
+
+                images = images.to(device)
+   
+                labels = labels.to(device)
+
+                
+                features = model.extract_features(images)
+
+                logits = model.classify(features)
+                            
+                loss = classifier_criterion(logits, labels)
+
+                test_running_loss += loss.item()
+
+                # Classification accuracy
+                predictions = torch.argmax(logits, dim=1)
+                test_correct += (predictions == labels).sum().item()
+                test_total += labels.size(0)
+
+
+        avg_test_loss = test_running_loss / len(test_loader)
+        test_accuracy = 100 * test_correct / test_total
+
+
+        #update the scheduler
+        scheduler.step()
+
+        current_lr = sup_optimizer.param_groups[0]["lr"]
+
+
+        print(f"Epoch [{epoch + 1}/{n_classifier_epochs}], Task Training Loss: {avg_classifier_loss:.4f}, Accuracy: {classification_accuracy:.2f}%, Task Test Loss: {avg_test_loss}, Task Test Accuracy: {test_accuracy}% LR: {current_lr:.6f}")
+        """print(
+                f"epoch {epoch+1}: "
+                f"allocated={torch.cuda.memory_allocated()/1024**2:.1f} MB, "
+                f"reserved={torch.cuda.memory_reserved()/1024**2:.1f} MB, "
+                f"peak={torch.cuda.max_memory_allocated()/1024**2:.1f} MB"
+            )"""
+
+        training_history["task_train_loss"].append(avg_classifier_loss)
+        
+        training_history["train_accuracy"].append(classification_accuracy)
+
+        test_history["task_train_loss"].append(avg_test_loss)
+
+        test_history["train_accuracy"].append(test_accuracy)
+
+
+        
+        
+    elapsed = time.perf_counter() - start
+
+    return model, training_history, test_history, elapsed
 
 
 
