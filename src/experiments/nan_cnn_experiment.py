@@ -1318,8 +1318,8 @@ def train_annealing_linear_weight_share_nan_cnn(
 
     #optimiser and schedular as defined in experiment_hebbian.py
     sup_optimizer = torch.optim.Adam(
-        model.fc1.parameters(),
-        lr=0.001
+        model.fc.parameters(),
+        lr=classifier_lr
         )
 
     scheduler = torch.optim.lr_scheduler.LambdaLR(
