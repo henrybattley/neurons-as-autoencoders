@@ -1878,7 +1878,7 @@ def train_linear_annealing_ae_cnn_weight_tied(
                 task_test_epoch_loss+= task_loss.item()
 
                 _, predicted = torch.max(task_outputs, 1)
-                test_correct += (predicted == labels).sum().item()
+                test_correct += (predicted == labels).sum()
                 test_total += labels.size(0)
 
 
