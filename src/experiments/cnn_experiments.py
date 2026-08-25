@@ -455,8 +455,8 @@ def train_annelaing_cnn(
         test_accuracy = 100.0 * test_correct.item() / test_total_samples
 
         
-        test_history["train_loss"].append(avg_test_loss)
-        test_history["train_accuracy"].append(test_accuracy)
+        test_history["task_loss"].append(avg_test_loss)
+        test_history["task_accuracy"].append(test_accuracy)
 
         #update the scheduler
         scheduler.step()
