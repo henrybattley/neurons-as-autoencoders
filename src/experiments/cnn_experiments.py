@@ -1539,8 +1539,8 @@ def train_linear_annealing_ae_cnn_weight_tied(
 
     }
     test_history = {
-    "task_train_loss": [],
-    "train_accuracy": []
+    "task_loss": [],
+    "task_accuracy": []
     }
     
 
@@ -1744,8 +1744,8 @@ def train_linear_annealing_ae_cnn_weight_tied(
         training_history["train_accuracy"].append(accuracy)
 
         
-        test_history["task_train_loss"].append(avg_test_loss)
-        test_history["train_accuracy"].append(test_accuracy)
+        test_history["task_loss"].append(avg_test_loss)
+        test_history["task_accuracy"].append(test_accuracy)
 
 
     elapsed = time.perf_counter() - start

@@ -659,8 +659,8 @@ def train_and_eval_weight_share_nan_cnn(
     }
 
     test_history = {
-    "task_train_loss": [],
-    "train_accuracy": []
+    "task_loss": [],
+    "task_accuracy": []
     }
     
 
@@ -860,9 +860,9 @@ def train_and_eval_weight_share_nan_cnn(
         
         training_history["train_accuracy"].append(classification_accuracy)
 
-        test_history["task_train_loss"].append(avg_test_loss)
+        test_history["task_loss"].append(avg_test_loss)
 
-        test_history["train_accuracy"].append(test_accuracy)
+        test_history["task_accuracy"].append(test_accuracy)
         
         
     elapsed = time.perf_counter() - start
@@ -904,8 +904,8 @@ def train_niave_linear_weight_share_nan_cnn(
     }
 
     test_history = {
-    "task_train_loss": [],
-    "train_accuracy": []
+    "task_loss": [],
+    "test_accuracy": []
     }
     
 
@@ -1133,9 +1133,9 @@ def train_niave_linear_weight_share_nan_cnn(
         
         training_history["train_accuracy"].append(classification_accuracy)
 
-        test_history["task_train_loss"].append(avg_test_loss)
+        test_history["task_loss"].append(avg_test_loss)
 
-        test_history["train_accuracy"].append(test_accuracy)
+        test_history["task_accuracy"].append(test_accuracy)
 
 
         
@@ -1180,8 +1180,8 @@ def train_annealing_linear_weight_share_nan_cnn(
     }
 
     test_history = {
-    "task_train_loss": [],
-    "train_accuracy": []
+    "task_loss": [],
+    "task_accuracy": []
     }
     
 
@@ -1428,9 +1428,9 @@ def train_annealing_linear_weight_share_nan_cnn(
         
         training_history["train_accuracy"].append(classification_accuracy)
 
-        test_history["task_train_loss"].append(avg_test_loss)
+        test_history["task_loss"].append(avg_test_loss)
 
-        test_history["train_accuracy"].append(test_accuracy)
+        test_history["task_accuracy"].append(test_accuracy)
 
 
         
