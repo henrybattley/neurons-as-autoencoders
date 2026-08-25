@@ -318,7 +318,7 @@ def train_no_pool_cnn(  data,
 
 
 
-def train_annelaing_cnn(  
+def train_annealing_cnn(  
                 train_data, 
                 test_data, 
                 input_dims,
