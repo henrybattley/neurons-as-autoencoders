@@ -346,8 +346,8 @@ def train_annelaing_cnn(
     }
 
     test_history = {
-    "task_train_loss": [],
-    "train_accuracy": []
+    "task_loss": [],
+    "task_accuracy": []
     }
     
 
