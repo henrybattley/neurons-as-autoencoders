@@ -16,6 +16,7 @@ class CNN(nn.Module):
                  classes,
                  pool_kernel_size,
                  pool_stride,
+                 pool_padding,
                  bias=True ,
                  in_channels=1
     ):
@@ -29,6 +30,7 @@ class CNN(nn.Module):
         self.classes = classes
         self.pool_kernel_size=pool_kernel_size
         self.pool_stride = pool_stride
+        self.pool_padding = pool_padding
         self.in_channels=in_channels
 
 
@@ -48,11 +50,12 @@ class CNN(nn.Module):
             nn.init.zeros_(self.conv1.bias)
 
 
-        self.pool = nn.MaxPool2d(kernel_size=pool_kernel_size, stride=pool_stride) 
+        self.pool = nn.MaxPool2d(kernel_size=pool_kernel_size, stride=pool_stride, padding=pool_padding) 
 
         #this calculation used for the flattened dims only works with square input..
         conv_dim = ((input_dims + 2*padding - kernel_size) // stride) + 1             
-        pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1        
+
+        pool_dim = ((conv_dim + 2*pool_padding - pool_kernel_size) // pool_stride) + 1    
 
         self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
 

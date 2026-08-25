@@ -6,8 +6,7 @@ import time
 
 from src.models import nan_cnn
 from src.models import weight_share_nan_cnn
-#from src.models import simple_weight_share_nan_cnn
-#from src.models import no_pool_simple_weight_share_nan_cnn
+
 from src.models import no_pool_weight_share_nan_cnn
 from src.models import no_pool_nan_cnn
 
@@ -502,6 +501,10 @@ def train_weight_share_nan_cnn(  data,
         stride=stride,
         padding=padding,
         n_filters=n_filters,
+
+        #added the pool padding for pooling to be consistent with the hebbian architecture comparison
+        pool_padding=0,
+
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
         bias=bias,
@@ -713,6 +716,10 @@ def train_and_eval_weight_share_nan_cnn(
         stride=stride,
         padding=padding,
         n_filters=n_filters,
+
+        #added the pool padding for pooling to be consistent with the hebbian architecture comparison
+        pool_padding=0,
+
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
         bias=bias,
@@ -1233,7 +1240,7 @@ def train_annealing_linear_weight_share_nan_cnn(
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
 
-        #added the padding for pooling to be consistent with the hebbian architecture comparison
+        #added the pool padding for pooling to be consistent with the hebbian architecture comparison
         pool_padding=pool_padding,
 
         bias=bias,
@@ -1357,7 +1364,7 @@ def train_annealing_linear_weight_share_nan_cnn(
 
             loss.backward()
 
-            #classifier_optimizer.step()
+
 
             sup_optimizer.step()
 
@@ -1504,6 +1511,10 @@ def train_nan_cnn_weight_share_show_features(  data,
         padding=padding,
         n_filters=n_filters,
         bias=bias,
+
+        #added the pool padding for pooling to be consistent with the hebbian architecture comparison
+        pool_padding=0,
+
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
         classes=n_classes
@@ -1723,6 +1734,10 @@ def train_linear_schedule_weight_share_nan_cnn(  data,
         stride=stride,
         padding=padding,
         n_filters=n_filters,
+
+        #added the pool padding for pooling to be consistent with the hebbian architecture comparison
+        pool_padding=0,
+
         pool_kernel_size=pool_kernel_size,
         pool_stride=pool_stride,
         bias=bias,

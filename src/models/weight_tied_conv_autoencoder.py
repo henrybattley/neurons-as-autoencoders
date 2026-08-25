@@ -17,6 +17,7 @@ class CNN_AE(nn.Module):
                  classes,
                  pool_kernel_size,
                  pool_stride,
+                 pool_padding,
                  bias=True 
     ):
         super(CNN_AE, self).__init__()
@@ -30,6 +31,7 @@ class CNN_AE(nn.Module):
         self.classes = classes
         self.pool_kernel_size=pool_kernel_size
         self.pool_stride = pool_stride
+        self.pool_padding = pool_padding
         self.bias =bias
 
 
@@ -58,11 +60,12 @@ class CNN_AE(nn.Module):
         #modern standard activation within convolutional networks is relu
         self.activation = nn.ReLU()
 
-        self.pool = nn.MaxPool2d(kernel_size=pool_kernel_size, stride=pool_stride) 
+        self.pool = nn.MaxPool2d(kernel_size=pool_kernel_size, stride=pool_stride, padding=pool_padding) 
 
         #this calculation used for the flattened dims only works with square input..
-        conv_dim = ((input_dims + 2*padding - kernel_size) // stride) + 1             
-        pool_dim = ((conv_dim - pool_kernel_size) // pool_stride) + 1        
+        conv_dim = ((input_dims + 2*padding - kernel_size) // stride) + 1                    
+
+        pool_dim = ((conv_dim + 2*pool_padding - pool_kernel_size) // pool_stride) + 1    
 
         self.fc = nn.Linear(n_filters * pool_dim * pool_dim, classes)
 
@@ -77,7 +80,7 @@ class CNN_AE(nn.Module):
 
         return h
 
-        #calls encode and decode the latent feature representation (used by individual filters)
+    #calls encode and decode the latent feature representation (used by individual filters)
     def autoencode(self, x):
 
         h = self.encode(x)
