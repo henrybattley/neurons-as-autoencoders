@@ -1859,7 +1859,7 @@ def train_linear_annealing_ae_cnn_weight_tied(
 
 
         avg_task_loss = task_epoch_loss/ len(train_loader)
-        accuracy = 100 * correct.item() / total_samples
+        accuracy = 100 * correct / total_samples
 
         #now do the eval on the test set
         with torch.no_grad():
@@ -1878,7 +1878,7 @@ def train_linear_annealing_ae_cnn_weight_tied(
                 task_test_epoch_loss+= task_loss.item()
 
                 _, predicted = torch.max(task_outputs, 1)
-                test_correct += (predicted == labels).sum()
+                test_correct += (predicted == labels).sum().item()
                 test_total += labels.size(0)
 
 
