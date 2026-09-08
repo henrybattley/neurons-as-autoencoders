@@ -50,23 +50,6 @@ class ANN(nn.Module):
         return self.activation(x @ w.T + b)
 
     
-    #local reconstruction used in training (each neuron encodes and reconstructs its input)
-    def reconstruct_single(self, x, neuron):
-
-        #the latent representation for the neuron selected for perturbation (of size (batch_size,1)
-        h_j = self.encode_single(x, neuron)
-
-        # decoder weights leaving that neuron (since neurons in the decoder weights correspond to the cols) (of size (1,input_dim))
-        w = self.decoder.weight[:, neuron].unsqueeze(0)   
-
-        # full decoder bias (biases are shared across all neurons) (of shape (1,input_dim))
-        b = self.decoder.bias.unsqueeze(0)      
-
-        #reconstruction from this single neuron
-        x_hat = self.activation(h_j * w + b)
-
-        return x_hat
-    
     #global reconstruction of the input (performed by the whole layer) used in plotting results
     def reconstruct_layer(self,x):
 

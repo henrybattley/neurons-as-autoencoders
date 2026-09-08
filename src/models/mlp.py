@@ -14,7 +14,7 @@ class MLP(nn.Module):
         self.output = nn.Linear(self.hidden_dim, 1)
         self.activation = nn.Sigmoid()
 
-        # initialization as per Bull's paper (although 0-ing the bias initially is better practise, I'm unsure if Larry has a random range for the bias or not?)
+        # initialization as per Bull's paper 
         nn.init.uniform_(self.hidden.weight, -1.0, 1.0)
         nn.init.uniform_(self.hidden.bias, -1.0, 1.0)
 

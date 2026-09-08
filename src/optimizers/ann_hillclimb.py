@@ -74,12 +74,15 @@ def ann_hill_climb(model, data_loader,criterion, device,rng):
         for inputs, _, _ in data_loader:
             inputs = inputs.to(device)
 
-            #output from a single selected neuron
-            x_hat_single = model.reconstruct_single(inputs,neuron=selected_neuron)
+            #loss is for the shared decoded structure (as per the diagrams)
+            x_hat_global = model.reconstruct_layer(inputs)
+
+
 
             #decoder ouput needs to be scaled to [-1,1] range
-            loss = criterion(x_hat_single*2-1, inputs)
+            loss = criterion(x_hat_global*2-1, inputs)
 
+        
             epoch_loss += loss.item()
 
         avg_loss = epoch_loss / len(data_loader)
@@ -148,10 +151,11 @@ def ann_hill_climb(model, data_loader,criterion, device,rng):
         for inputs, _,_  in data_loader:
             inputs = inputs.to(device)
 
-            #new output from a single selected neuron
-            x_hat_single = model.reconstruct_single(inputs,neuron=selected_neuron)
-    
-            loss = criterion(x_hat_single*2-1, inputs)
+
+            #loss is for the shared decoded structure (as per the diagrams)
+            x_hat_global = model.reconstruct_layer(inputs)
+   
+            loss = criterion(x_hat_global*2-1, inputs)
 
             new_epoch_loss += loss.item()
 

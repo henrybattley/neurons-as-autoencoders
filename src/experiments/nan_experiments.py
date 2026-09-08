@@ -390,6 +390,7 @@ def train_NAN_and_test(  data,
         avg_regression_loss = epoch_loss / len(test_loader)
 
         print(f"Epoch [{epoch + 1}/{n_epochs}], Regression Test Loss: {avg_regression_loss:.4f}")
+
         training_history["task_test_loss"].append(avg_regression_loss)
 
 

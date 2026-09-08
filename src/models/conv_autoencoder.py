@@ -56,7 +56,7 @@ class CNN_AE(nn.Module):
             padding=padding,
             bias=bias)
         
-        #xavier is useful for symmetric activations (like sigmoid)
+        #xavier is standard for sigmoid
         nn.init.xavier_normal_(self.decoder.weight)
 
         if bias == True:
@@ -85,22 +85,20 @@ class CNN_AE(nn.Module):
 
         return h
 
-        #calls encode and decode the latent feature representation (used by individual filters)
+    #calls encode and decode the latent feature representation 
     def autoencode(self, x):
 
         h = self.encode(x)
 
-        #experiment with different activation here-- perhaps no sigmoid
+
         x_hat = torch.sigmoid(self.decoder(h))
 
         return x_hat
 
 
     def classify(self, h):
-        #x is (batch, 1, 28, 28)
-        #x = F.relu(self.conv1(x))
 
-        #x_hat = self.encode(x)
+
         h_pool = self.pool(h)
 
         #flatten here

@@ -7,8 +7,9 @@ def mlp_hill_climb(model, data_loader, criterion, device,rng):
     model.train()
 
     epoch_loss = 0.0
-    for inputs, labels, target_inputs in data_loader:
-        inputs, labels, target_inputs = inputs.to(device), labels.to(device), target_inputs.to(device)
+    # the first return within the nk dataloader is the data scaled within range [-1,1]
+    for inputs, labels,_ in data_loader:
+        inputs, labels = inputs.to(device), labels.to(device)
     
         outputs = model(inputs)
         loss = criterion(outputs, labels)
@@ -66,7 +67,7 @@ def mlp_hill_climb(model, data_loader, criterion, device,rng):
     #now get the loss again and compare previous
 
     new_epoch_loss = 0.0
-    for inputs, labels in data_loader:
+    for inputs, labels,_  in data_loader:
         inputs, labels = inputs.to(device), labels.to(device)
     
         outputs = model(inputs)

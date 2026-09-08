@@ -39,7 +39,7 @@ class ConvFilter(nn.Module):
             bias=bias
         )       
 
-        #xavier is useful for symmetric activations (like sigmoid)
+        #xavier is standard for sigmoid
         nn.init.xavier_normal_(self.decoder.weight)
 
         if bias == True:
