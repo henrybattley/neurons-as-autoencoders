@@ -65,7 +65,7 @@ class CNN(nn.Module):
 
 
     def forward(self, x):
-        #x is (batch, 1, 28, 28)
+    
         x = F.relu(self.conv1(x))
         x = self.pool(x)
 
