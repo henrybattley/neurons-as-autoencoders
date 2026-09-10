@@ -3,6 +3,6 @@ This Repository Contains the Implementations for The MLP Reproduction of the Neu
 It also contains the convolutional extension of the neurons as autoencoders rule
 <br>
 <br> Folder: 'Models' contains all models (even some experimental ones)
-<br> Folder: 'Optimisers' contains the separate hill climbers 
+<br> Folder: 'Optimisers' contains the separate hill climbers and a global backprop implementation
 <br> Folder: 'Experiments' contains the main training and training experiments
-<br> Folder: 'Notebooks' contains the jupyter files where the experiments were run... all results can be seen within there (with some narrative)
+<br> Folder: 'Notebooks' contains the jupyter files where the experiments were run... all results can be seen within there (with some narrative) and the final evaluation results may be see towards the end of the nan_cnn_experiments.ipynb (within the notebooks folder)
