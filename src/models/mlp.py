@@ -31,17 +31,3 @@ class MLP(nn.Module):
 
         return x
     
-    """
-    #function to get the model out to onnx format for visualisation
-    def export_onnx(self, filename="cnn.onnx"):
-        dummy = torch.randn(1, 1, 28, 28)
-        torch.onnx.export(
-            self,
-            dummy,
-            filename,
-            input_names=["input"],
-            output_names=["output"],
-            dynamic_axes={"input": {0: "batch"}, "output": {0: "batch"}},
-            opset_version=11
-        )
-        print(f"[OK] Model exported to {filename}") """

@@ -159,12 +159,6 @@ def train_nan_cnn(  data,
 
             classifier_optimizer.zero_grad()
 
-            #logits =model(images)
-
-            #logits = model.classify(features)
-
-            
-
 
             with torch.no_grad():
                 features = model.extract_features(images)
